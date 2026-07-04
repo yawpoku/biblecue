@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><title>Connection Test</title>
+<style>
+body { font-family: monospace; background: #0d1117; color: #e6edf3; padding: 20px; }
+.ok { color: #3fb950; }
+.err { color: #f85149; }
+.warn { color: #d4a017; }
+</style>
+</head>
+<body>
+<h2>BibleCue — Connection Test</h2>
+<div id="output"></div>
+<script>
+// Test WebSocket connection to Python backend
+const log = (msg, cls='') => {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = msg;
+  document.getElementById('output').appendChild(d);
+};
+log('Testing connection to Python backend (ws://127.0.0.1:8767)...');
+const ws = new WebSocket('ws://127.0.0.1:8767');
+ws.onopen = () => {
+  log('✅ Connected to Python backend!', 'ok');
+  ws.send(JSON.stringify({type: 'get_settings'}));
+};
+ws.onmessage = (e) => {
+  const d = JSON.parse(e.data);
+  log('📨 Received: ' + JSON.stringify(d).substring(0, 100), 'ok');
+};
+ws.onerror = () => log('❌ Cannot connect — is backend.py running? Run: python backend.py', 'err');
+ws.onclose = () => log('Connection closed.', 'warn');
+</script>
+</body>
+</html>

@@ -1,0 +1,2215 @@
+/* ============================================================
+   BibleCue — style.css
+   Premium Modern Dark UI — Church Broadcast Tool
+   ============================================================ */
+
+/* ── Google Fonts Import ──────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+/* ============================================================
+   SECTION 1: CSS DESIGN TOKENS / VARIABLES
+   ============================================================ */
+:root {
+  /* ── Core Backgrounds ────────────────────────────────────── */
+  --bg:              #060B18;   /* deep midnight navy — main background */
+  --bg-secondary:    #0D1526;   /* sidebar background */
+  --bg-tertiary:     #111827;   /* slightly lighter surface */
+
+  /* ── Glassmorphism Cards ─────────────────────────────────── */
+  --card-bg:           rgba(255, 255, 255, 0.04);
+  --card-border:       rgba(255, 255, 255, 0.08);
+  --card-hover-bg:     rgba(255, 255, 255, 0.07);
+  --card-hover-border: rgba(255, 255, 255, 0.15);
+
+  /* ── Brand: Gold / Amber ─────────────────────────────────── */
+  --gold:       #F59E0B;
+  --gold-dim:   #B45309;
+  --gold-glow:  rgba(245, 158, 11, 0.25);
+
+  /* ── Accent: Blue ────────────────────────────────────────── */
+  --blue:       #3B82F6;
+  --blue-dim:   #1D4ED8;
+  --blue-glow:  rgba(59, 130, 246, 0.2);
+
+  /* ── Accent: Green ───────────────────────────────────────── */
+  --green:      #10B981;
+  --green-dim:  #047857;
+  --green-glow: rgba(16, 185, 129, 0.2);
+
+  /* ── Accent: Red ─────────────────────────────────────────── */
+  --red:        #EF4444;
+  --red-glow:   rgba(239, 68, 68, 0.2);
+
+  /* ── Accent: Purple ──────────────────────────────────────── */
+  --purple:     #8B5CF6;
+
+  /* ── Foreground / Text ───────────────────────────────────── */
+  --fg:   #F8FAFC;   /* near-white */
+  --fg-2: #94A3B8;   /* slate muted */
+  --fg-3: #475569;   /* dimmer slate */
+  --fg-4: #1E293B;   /* very dim */
+
+  /* ── Log Colors ──────────────────────────────────────────── */
+  --log-tx: #60A5FA;   /* transcript log — soft blue */
+  --log-dt: #34D399;   /* detection log — emerald */
+
+  /* ── Divider / Structural ────────────────────────────────── */
+  --divider: rgba(255, 255, 255, 0.06);
+
+  /* ── Legacy aliases (used by some components) ────────────── */
+  --card:         var(--card-bg);
+  --card-hover:   var(--card-hover-bg);
+  --border:       var(--card-border);
+  --log-bg:       var(--bg);
+  --header-bg:    rgba(6, 11, 24, 0.95);
+}
+
+/* ============================================================
+   SECTION 2: RESET & BASE
+   ============================================================ */
+
+/* ── Box Model Reset ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Root Sizing ─────────────────────────────────────────────── */
+html,
+body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Base Typography & Surface ───────────────────────────────── */
+body {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}
+
+/* ============================================================
+   SECTION 3: CUSTOM TITLEBAR
+   ============================================================ */
+
+/* ── Titlebar Container ──────────────────────────────────────── */
+#titlebar {
+  height: 32px;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 14px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+  position: relative;
+  z-index: 100;
+}
+
+/* ── Gold Left Accent Bar ─────────────────────────────────────── */
+#titlebar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dim) 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── Left Side: Icon + App Name ──────────────────────────────── */
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cross-icon {
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.titlebar-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 3px;
+  -webkit-app-region: no-drag;
+}
+
+.app-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--fg);
+  text-transform: uppercase;
+}
+
+/* ── Window Controls ─────────────────────────────────────────── */
+.titlebar-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+  height: 100%;
+}
+
+.titlebar-controls button {
+  -webkit-app-region: no-drag;
+  width: 46px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.titlebar-controls button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+
+#btn-min:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+}
+
+#btn-max:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--blue);
+}
+
+#btn-close:hover {
+  background: var(--red) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--red-glow);
+}
+
+/* ============================================================
+   SECTION 4: GOLD ACCENT LINE
+   ============================================================ */
+
+.gold-line {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gold) 0%,
+    var(--gold-dim) 40%,
+    rgba(245, 158, 11, 0.15) 75%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   SECTION 5: APP LAYOUT (SHELL)
+   ============================================================ */
+
+/* ── Main Shell ──────────────────────────────────────────────── */
+#app-layout {
+  display: flex;
+  height: calc(100vh - 34px); /* titlebar 32px + gold line 2px */
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+}
+
+/* ── Layout Divider ──────────────────────────────────────────── */
+.layout-divider {
+  width: 1px;
+  background: var(--divider);
+  flex-shrink: 0;
+}
+
+/* ── Main Content Area ───────────────────────────────────────── */
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* ============================================================
+   SECTION 6: SIDEBAR
+   ============================================================ */
+
+/* ── Sidebar Container ───────────────────────────────────────── */
+#sidebar {
+  width: 300px;
+  min-width: 300px;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 10px 16px;
+  gap: 0;
+  flex-shrink: 0;
+  border-right: 1px solid var(--divider);
+}
+
+/* ============================================================
+   SECTION 7: GLASSMORPHISM CARDS
+   ============================================================ */
+
+/* ── Base Card ───────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:last-child {
+  margin-bottom: 0;
+}
+
+.card:hover {
+  background: var(--card-hover-bg);
+  border-color: var(--card-hover-border);
+}
+
+/* ── Card Subtle Inner Glow (top-left highlight) ─────────────── */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* ── Card Header ─────────────────────────────────────────────── */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.card-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-2);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* ============================================================
+   SECTION 8: RADIO OPTIONS (MODE SELECTION)
+   ============================================================ */
+
+/* ── Radio Group Container ───────────────────────────────────── */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Individual Radio Option (card-style row) ────────────────── */
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Hover: lift + blue glow ─────────────────────────────────── */
+.radio-option:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 2px 12px var(--blue-glow), 0 0 0 1px rgba(59, 130, 246, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ── Hide native radio ───────────────────────────────────────── */
+.radio-option input[type="radio"] {
+  display: none;
+}
+
+/* ── Custom Radio Indicator ──────────────────────────────────── */
+.radio-custom {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--fg-3);
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.radio-custom::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  transition: transform 0.2s ease;
+}
+
+.radio-option input[type="radio"]:checked ~ .radio-custom {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.radio-option input[type="radio"]:checked ~ .radio-custom::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── Selected State: gold tint ───────────────────────────────── */
+.radio-option:has(input:checked) {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.05);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.08);
+  transform: none;
+}
+
+.radio-option:has(input:checked):hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Radio Label Content ─────────────────────────────────────── */
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.radio-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.2;
+}
+
+.radio-desc {
+  font-size: 10px;
+  color: var(--fg-2);
+  line-height: 1.3;
+}
+
+/* ── Mode Status ─────────────────────────────────────────────── */
+.mode-status {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--fg-2);
+  min-height: 0;
+  transition: all 0.2s ease;
+}
+
+.mode-status:empty {
+  display: none;
+}
+
+/* ============================================================
+   SECTION 9: FORM CONTROLS
+   ============================================================ */
+
+/* ── Form Grid / Layout ──────────────────────────────────────── */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-row label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-2);
+  white-space: nowrap;
+  min-width: 88px;
+  flex-shrink: 0;
+}
+
+.form-hint {
+  font-size: 10px;
+  color: var(--fg-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Text Inputs ─────────────────────────────────────────────── */
+.inp {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 10px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.inp::placeholder {
+  color: var(--fg-3);
+}
+
+.inp:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.inp:focus {
+  border-color: var(--gold);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+}
+
+/* ── Input Size Variants ─────────────────────────────────────── */
+.inp-sm {
+  max-width: 80px;
+  flex: 0 0 80px;
+}
+
+.inp-mono {
+  font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Hide number input spinners ──────────────────────────────── */
+input[type="number"].inp {
+  -moz-appearance: textfield;
+}
+
+input[type="number"].inp::-webkit-outer-spin-button,
+input[type="number"].inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Select Dropdowns ────────────────────────────────────────── */
+.sel {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 28px 0 10px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Custom chevron arrow in gold */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23F59E0B'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.sel:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.sel:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.sel option {
+  background: var(--bg-tertiary);
+  color: var(--fg);
+}
+
+.sel-wide {
+  width: 100%;
+}
+
+/* ── Save Indicator ──────────────────────────────────────────── */
+.save-indicator {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  text-align: right;
+  min-height: 16px;
+}
+
+.save-indicator.visible {
+  opacity: 1;
+}
+
+/* ============================================================
+   SECTION 10: COLLAPSIBLE CARDS
+   ============================================================ */
+
+/* ── Collapsible Card Reset ──────────────────────────────────── */
+.card-collapsible .card-header {
+  margin-bottom: 0;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  padding: 4px 4px;
+  margin: -4px -4px;
+}
+
+.collapsible-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.collapse-arrow {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--fg-3);
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.collapse-arrow.open {
+  transform: rotate(90deg);
+  color: var(--gold);
+}
+
+.collapsible-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.2s ease;
+  margin-top: 0;
+}
+
+.collapsible-body.open {
+  max-height: 340px;
+  opacity: 1;
+  margin-top: 14px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   SECTION 11: ADVANCED PANEL SECTIONS
+   ============================================================ */
+
+.adv-section {
+  padding: 4px 0;
+}
+
+.adv-section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--fg-2);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.adv-divider {
+  height: 1px;
+  background: var(--divider);
+  margin: 12px 0;
+}
+
+.dg-status {
+  font-size: 10px;
+  color: var(--fg-2);
+  margin-top: 6px;
+  min-height: 14px;
+  transition: color 0.2s ease;
+}
+
+.dg-status:empty {
+  display: none;
+}
+
+.dev-status {
+  font-size: 10px;
+  color: var(--fg-2);
+  margin-top: 6px;
+  min-height: 14px;
+}
+
+/* ============================================================
+   SECTION 12: INPUT-WITH-BUTTON COMBOS
+   ============================================================ */
+
+.input-with-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-with-btn .inp {
+  flex: 1;
+}
+
+/* ── Icon Button ─────────────────────────────────────────────── */
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--fg-2);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--card-hover-bg);
+  border-color: var(--card-hover-border);
+  color: var(--fg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-icon:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   SECTION 13: MANUAL SEND ROW
+   ============================================================ */
+
+.manual-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.manual-row .inp {
+  flex: 1;
+}
+
+/* ── Send Button ─────────────────────────────────────────────── */
+.btn-send {
+  height: 32px;
+  padding: 0 14px;
+  background: linear-gradient(135deg, var(--blue-dim), var(--blue));
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.btn-send:hover {
+  background: linear-gradient(135deg, var(--blue), #60A5FA);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--blue-glow);
+}
+
+.btn-send:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+/* ============================================================
+   SECTION 14: DEEPGRAM STATUS
+   ============================================================ */
+
+.dg-status-main {
+  font-size: 11px;
+  color: var(--fg-2);
+  margin-bottom: 8px;
+  min-height: 0;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+
+.dg-status-main:empty {
+  display: none;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   SECTION 15: LISTEN STATUS ROW
+   ============================================================ */
+
+.listen-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#listen-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  color: var(--fg-2);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+/* ============================================================
+   SECTION 16: PULSE DOT
+   ============================================================ */
+
+/* ── Pulse dot (status indicator beside listen label) ────────── */
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fg-4);
+  border: 1px solid var(--fg-3);
+  flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pulse-dot.active {
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 0 0 0 var(--green-glow);
+  animation: pulse-glow 1.6s ease-in-out infinite;
+}
+
+/* ── Status dot color variants ───────────────────────────────── */
+.dot-green {
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+}
+
+.dot-red {
+  background: var(--red) !important;
+  border-color: var(--red) !important;
+}
+
+.dot-gray {
+  background: var(--fg-3) !important;
+  border-color: var(--fg-3) !important;
+}
+
+.dot-yellow {
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+}
+
+/* ============================================================
+   SECTION 17: LISTEN BUTTON — THE PRIMARY CTA
+   ============================================================ */
+
+/* ── Listen Button Base ──────────────────────────────────────── */
+.btn-listen {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* ── Inner shimmer overlay (hover reveals it) ────────────────── */
+.btn-listen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+}
+
+.btn-listen:hover::after {
+  opacity: 1;
+}
+
+/* ── Start State: vibrant green gradient ─────────────────────── */
+.btn-listen-start {
+  background: linear-gradient(135deg, var(--green-dim) 0%, var(--green) 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--green-glow), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.btn-listen-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Stop State: red gradient ────────────────────────────────── */
+.btn-listen-stop {
+  background: linear-gradient(135deg, #DC2626 0%, var(--red) 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--red-glow), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.btn-listen-stop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(239, 68, 68, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Active Press State ──────────────────────────────────────── */
+.btn-listen:active {
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.95);
+}
+
+/* ============================================================
+   SECTION 18: AUTOSTART CHECKBOX ROW
+   ============================================================ */
+
+.autostart-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Google Listener URL Row ─────────────────────────────────── */
+.listener-url-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+}
+
+.listener-url-label {
+  color: var(--fg-3);
+}
+
+.listener-url-link {
+  color: var(--blue);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+  max-width: 185px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listener-url-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+#card-control {
+  overflow: visible;
+}
+
+/* ── Checkbox Label ──────────────────────────────────────────── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  color: var(--fg-2);
+  transition: color 0.2s ease;
+}
+
+.checkbox-label:hover {
+  color: var(--fg);
+}
+
+.checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+/* ── Custom Checkbox ─────────────────────────────────────────── */
+.checkbox-custom {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid var(--fg-3);
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.checkbox-custom::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  width: 5px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.15s ease;
+}
+
+.checkbox-label input:checked ~ .checkbox-custom {
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+}
+
+.checkbox-label input:checked ~ .checkbox-custom::after {
+  transform: rotate(45deg) scale(1);
+}
+
+/* ============================================================
+   SECTION 19: VERSE DISPLAY — THE HERO PANEL
+   ============================================================ */
+
+/* ── Now On Screen Container ─────────────────────────────────── */
+#now-on-screen {
+  padding: 22px 26px 20px;
+  background: linear-gradient(
+    160deg,
+    rgba(245, 158, 11, 0.05) 0%,
+    rgba(245, 158, 11, 0.02) 40%,
+    transparent 100%
+  );
+  border-bottom: 2px solid transparent;
+  /* Gold gradient bottom border via border-image */
+  border-image: linear-gradient(
+    90deg,
+    var(--gold) 0%,
+    var(--gold-dim) 45%,
+    rgba(245, 158, 11, 0.2) 75%,
+    transparent 100%
+  ) 1;
+  flex-shrink: 0;
+  min-height: 110px;
+  position: relative;
+}
+
+/* ── Subtle ambient top line ─────────────────────────────────── */
+#now-on-screen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(245, 158, 11, 0.25) 20%,
+    rgba(245, 158, 11, 0.45) 50%,
+    rgba(245, 158, 11, 0.25) 80%,
+    transparent 100%
+  );
+}
+
+/* ── Header Row ──────────────────────────────────────────────── */
+.now-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ── "NOW ON SCREEN" Label ───────────────────────────────────── */
+.now-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  text-transform: uppercase;
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+
+.now-hints {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  color: var(--fg-3);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+/* ── Verse Text — HERO TYPOGRAPHY (Playfair Display) ─────────── */
+.verse-text {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--fg);
+  line-height: 1.7;
+  min-height: 36px;
+  letter-spacing: 0.01em;
+  animation: fadeIn 0.4s ease;
+  transition: color 0.2s ease;
+  user-select: text;
+  cursor: text;
+}
+
+/* ── Verse Reference ─────────────────────────────────────────── */
+.verse-ref {
+  margin-top: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  min-height: 22px;
+  text-shadow: 0 0 16px var(--gold-glow);
+  transition: all 0.2s ease;
+}
+
+/* ── Verse Updated Flash (added briefly by JS) ───────────────── */
+.verse-updated {
+  animation: verseFlash 0.55s ease forwards;
+}
+
+/* ============================================================
+   SECTION 20: LOG PANELS
+   ============================================================ */
+
+/* ── Log Panels Wrapper ──────────────────────────────────────── */
+#log-panels {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+  min-height: 0;
+}
+
+/* ── Individual Log Panel ────────────────────────────────────── */
+.log-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--divider);
+  min-width: 0;
+}
+
+.log-panel:last-child {
+  border-right: none;
+}
+
+/* ── Log Panel Header ────────────────────────────────────────── */
+.log-header {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+/* ── Blue-tinted header for transcript log ───────────────────── */
+.log-header-blue {
+  background: rgba(59, 130, 246, 0.07);
+  color: var(--blue);
+  border-bottom-color: rgba(59, 130, 246, 0.2);
+}
+
+/* ── Green-tinted header for detection log ───────────────────── */
+.log-header-green {
+  background: rgba(16, 185, 129, 0.07);
+  color: var(--green);
+  border-bottom-color: rgba(16, 185, 129, 0.2);
+}
+
+/* ── Clear Log Button ────────────────────────────────────────── */
+.btn-clear-log {
+  background: transparent;
+  border: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  font-size: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-clear-log:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-2);
+}
+
+/* ── Log Scroll Body ─────────────────────────────────────────── */
+.log-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  user-select: text;
+  cursor: text;
+}
+
+/* ── Log Entry Lines ─────────────────────────────────────────── */
+.log-entry {
+  animation: slideIn 0.2s ease;
+  transition: opacity 0.2s ease;
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
+/* ── Slide-in animation class for log entries ────────────────── */
+.slide-in {
+  animation: slideIn 0.2s ease;
+}
+
+/* ── Transcript log entries: soft blue ───────────────────────── */
+#transcript-log .log-entry {
+  color: var(--log-tx);
+}
+
+/* ── Detection log entries: emerald green ────────────────────── */
+#detection-log .log-entry {
+  color: var(--log-dt);
+}
+
+/* ── Interim (non-final) transcript: italic, dimmed ──────────── */
+.log-interim {
+  font-style: italic;
+  opacity: 0.65;
+}
+
+/* ── Final transcript entry: full brightness ─────────────────── */
+.log-final {
+  opacity: 1;
+}
+
+/* ── Timestamp in log entries ────────────────────────────────── */
+.log-time {
+  color: var(--fg-3);
+  margin-right: 6px;
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+/* ============================================================
+   SECTION 21: STATUS BAR
+   ============================================================ */
+
+/* ── Status Bar Container ────────────────────────────────────── */
+#statusbar {
+  height: 28px;
+  background: rgba(6, 11, 24, 0.92);
+  border-top: 1px solid var(--divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ── Status Indicator Dot ────────────────────────────────────── */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  flex-shrink: 0;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 0 0 var(--green-glow);
+  animation: pulse-glow 1.6s ease-in-out infinite;
+}
+
+.status-dot.error {
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red-glow);
+}
+
+/* ── Status Text ─────────────────────────────────────────────── */
+#status-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  color: var(--fg-2);
+  font-weight: 500;
+}
+
+.status-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Version Badge ───────────────────────────────────────────── */
+#status-version {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  color: var(--fg-3);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   SECTION 22: CUSTOM SCROLLBARS — ULTRA THIN (4px)
+   ============================================================ */
+
+/* ── Global Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Scrollbar Thumb — nearly invisible ──────────────────────── */
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── Sidebar scrollbar ───────────────────────────────────────── */
+#sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ============================================================
+   SECTION 23: KEYFRAME ANIMATIONS
+   ============================================================ */
+
+/* ── Pulse Glow — for active recording dots ──────────────────── */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+    opacity: 0.85;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    opacity: 1;
+  }
+}
+
+/* ── Fade In — for verse updates ─────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Slide In — for log entries (from bottom, 4px translateY) ── */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Fade Out ────────────────────────────────────────────────── */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Verse Flash — brief gold highlight when verse changes ───── */
+@keyframes verseFlash {
+  0% {
+    color: var(--fg);
+    text-shadow: none;
+  }
+  30% {
+    color: var(--gold);
+    text-shadow:
+      0 0 20px var(--gold-glow),
+      0 0 40px rgba(245, 158, 11, 0.15);
+  }
+  100% {
+    color: var(--fg);
+    text-shadow: none;
+  }
+}
+
+/* ── Shimmer — for loading states ────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ── Spin — for loading indicators ──────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   SECTION 24: ANIMATION UTILITY CLASSES
+   ============================================================ */
+
+/* ── Shimmer loading overlay ─────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Spinning loader ─────────────────────────────────────────── */
+.spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Loading spinner ring ────────────────────────────────────── */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--card-border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ============================================================
+   SECTION 25: UTILITY CLASSES
+   ============================================================ */
+
+/* ── Display ─────────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Text color utilities ────────────────────────────────────── */
+.text-gold   { color: var(--gold);   }
+.text-blue   { color: var(--blue);   }
+.text-green  { color: var(--green);  }
+.text-red    { color: var(--red);    }
+.text-purple { color: var(--purple); }
+.text-muted  { color: var(--fg-2);   }
+.text-dim    { color: var(--fg-3);   }
+
+/* ── Monospace text ──────────────────────────────────────────── */
+.mono {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* ── Truncate overflow text ──────────────────────────────────── */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   SECTION 26: FOCUS & ACCESSIBILITY
+   ============================================================ */
+
+/* ── Remove default focus ring for mouse users ───────────────── */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Keyboard focus ring ─────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ── Button base reset ───────────────────────────────────────── */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ============================================================
+   SECTION 27: SEPARATORS & SECTION HEADINGS
+   ============================================================ */
+
+/* ── Horizontal rule / divider ───────────────────────────────── */
+hr,
+.separator {
+  height: 1px;
+  background: var(--divider);
+  border: none;
+  margin: 10px 0;
+}
+
+/* ── Section heading label inside a panel ────────────────────── */
+.section-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--divider);
+}
+
+/* ============================================================
+   SECTION 28: BADGE / PILL COMPONENTS
+   ============================================================ */
+
+/* ── Base badge ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.badge-gold {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================================
+   SECTION 29: TOOLTIP
+   ============================================================ */
+
+/* ── Attribute-based tooltip ─────────────────────────────────── */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  color: var(--fg);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* ============================================================
+   SECTION 30: TOAST NOTIFICATIONS
+   ============================================================ */
+
+/* ── Toast container ─────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 40px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: var(--fg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.25s ease;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.toast-success {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+}
+
+.toast-error {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+
+/* ============================================================
+   SECTION 31: LOADING / SKELETON STATES
+   ============================================================ */
+
+/* ── Skeleton block ──────────────────────────────────────────── */
+.skeleton {
+  background: var(--card-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ============================================================
+   SECTION 32: DECORATIVE GOLD ELEMENTS
+   ============================================================ */
+
+/* ── Gold top accent for highlighted cards ───────────────────── */
+.card-gold-accent {
+  position: relative;
+}
+
+.card-gold-accent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold-glow) 50%,
+    transparent 100%
+  );
+}
+
+/* ── Active verse panel ambient glow ─────────────────────────── */
+#now-on-screen.verse-active {
+  box-shadow: inset 0 0 40px rgba(245, 158, 11, 0.04);
+}
+
+/* ============================================================
+   SECTION 33: PERFORMANCE & WILL-CHANGE HINTS
+   ============================================================ */
+
+/* ── Promote layers for frequent transform elements ──────────── */
+.btn-listen,
+.btn-send,
+.btn-icon,
+.radio-option {
+  will-change: transform;
+}
+
+/* ── Smooth transitions for all interactive elements ─────────── */
+a,
+button,
+input,
+select,
+label {
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* ============================================================
+   SECTION 34: RESPONSIVE SAFETY GUARDS
+   ============================================================ */
+
+/* ── Small window height ─────────────────────────────────────── */
+@media (max-height: 500px) {
+  #now-on-screen {
+    padding: 12px 16px 10px;
+    min-height: 70px;
+  }
+
+  .verse-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .btn-listen {
+    height: 40px;
+  }
+}
+
+/* ── Narrow window ───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+}
+
+/* ============================================================
+   SECTION 35: NEW COMPONENT EXTENSIONS
+   Toast visibility states, waveform, badges, counters, etc.
+   ============================================================ */
+
+/* ── Toast visibility transitions (used by app.js) ──────────── */
+.toast {
+  opacity: 0;
+  transform: translateX(20px) translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.toast.toast-visible {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
+
+.toast.toast-hiding {
+  opacity: 0;
+  transform: translateX(20px) translateY(-4px);
+}
+
+.toast-info {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+
+.toast-warning {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+}
+
+.toast-icon {
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon { color: var(--green); }
+.toast-error   .toast-icon { color: var(--red); }
+.toast-info    .toast-icon { color: var(--blue); }
+.toast-warning .toast-icon { color: var(--gold); }
+
+.toast-msg {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ── Waveform Bars ──────────────────────────────────────────── */
+.waveform-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 4px;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.waveform-bars.waveform-active {
+  opacity: 1;
+}
+
+.waveform-bars span {
+  display: block;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--green);
+  height: 4px;
+}
+
+.waveform-bars.waveform-active span:nth-child(1) { animation: wave 1.2s ease-in-out infinite 0.00s; }
+.waveform-bars.waveform-active span:nth-child(2) { animation: wave 1.2s ease-in-out infinite 0.15s; }
+.waveform-bars.waveform-active span:nth-child(3) { animation: wave 1.2s ease-in-out infinite 0.30s; }
+.waveform-bars.waveform-active span:nth-child(4) { animation: wave 1.2s ease-in-out infinite 0.45s; }
+.waveform-bars.waveform-active span:nth-child(5) { animation: wave 1.2s ease-in-out infinite 0.60s; }
+
+@keyframes wave {
+  0%, 100% { height: 4px; }
+  50%       { height: 16px; }
+}
+
+/* ── Mode Badges ────────────────────────────────────────────── */
+.mode-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.mode-badge-free {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.mode-badge-pro {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.mode-badge-offline {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--purple);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* ── Log Count Badges ───────────────────────────────────────── */
+.log-count {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-2);
+  margin-left: 4px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── Copy Verse Button ──────────────────────────────────────── */
+.btn-fullscreen {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--fg-2);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0 10px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  font-family: inherit;
+}
+
+.btn-fullscreen:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--blue);
+}
+
+.btn-copy-verse {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--fg-3);
+  cursor: pointer;
+  font-size: 13px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.btn-copy-verse:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--gold);
+  transform: scale(1.05);
+}
+
+/* ── Backend Status (status bar) ────────────────────────────── */
+.status-backend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+}
+
+.backend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  flex-shrink: 0;
+}
+
+.backend-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+#backend-text {
+  font-size: 10px;
+  color: var(--fg-3);
+  letter-spacing: 0.02em;
+}
+
+/* ── Verse Glow overlay ─────────────────────────────────────── */
+.verse-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Card icon SVG alignment ────────────────────────────────── */
+.card-icon svg {
+  display: block;
+  color: var(--fg-2);
+}
+
+/* ── Password Modal ──────────────────────────────────────────────────── */
+.pwd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.pwd-modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 24px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pwd-modal-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.pwd-modal-error {
+  font-size: 11px;
+  color: var(--red);
+  min-height: 14px;
+}
+.pwd-modal-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Output Plugin Rows ─────────────────────────────────── */
+.output-plugin-row {
+  border-bottom: 1px solid var(--divider);
+  padding: 6px 0;
+}
+.output-plugin-row:last-child { border-bottom: none; }
+
+.output-plugin-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.output-plugin-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.output-expand-btn {
+  background: none;
+  border: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 4px;
+  transition: transform 0.15s, color 0.15s;
+}
+.output-expand-btn:hover { color: var(--fg); }
+.output-expand-btn.open { transform: rotate(90deg); }
+
+.output-plugin-cfg {
+  display: none;
+  padding: 6px 0 4px 28px;
+  gap: 6px;
+  flex-direction: column;
+}
+.output-plugin-cfg.open { display: flex; }
+
+/* ============================================================
+   SECTION: LIGHT MODE THEME
+   Applied when body[data-theme="light"]
+   ============================================================ */
+
+body[data-theme="light"] {
+  /* ── Core Backgrounds ────────────────────────────────────── */
+  --bg:              #F0F4FA;
+  --bg-secondary:    #E4EAF4;
+  --bg-tertiary:     #D9E1EF;
+
+  /* ── Glassmorphism Cards ─────────────────────────────────── */
+  --card-bg:           rgba(0, 0, 0, 0.035);
+  --card-border:       rgba(0, 0, 0, 0.10);
+  --card-hover-bg:     rgba(0, 0, 0, 0.06);
+  --card-hover-border: rgba(0, 0, 0, 0.18);
+
+  /* ── Brand: Gold / Amber (darker for light bg contrast) ─── */
+  --gold:       #B45309;
+  --gold-dim:   #78350F;
+  --gold-glow:  rgba(180, 83, 9, 0.15);
+
+  /* ── Accent: Blue ────────────────────────────────────────── */
+  --blue:       #1D4ED8;
+  --blue-dim:   #1E3A8A;
+  --blue-glow:  rgba(29, 78, 216, 0.15);
+
+  /* ── Accent: Green ───────────────────────────────────────── */
+  --green:      #047857;
+  --green-dim:  #065F46;
+  --green-glow: rgba(4, 120, 87, 0.15);
+
+  /* ── Accent: Red ─────────────────────────────────────────── */
+  --red:        #B91C1C;
+  --red-glow:   rgba(185, 28, 28, 0.15);
+
+  /* ── Accent: Purple ──────────────────────────────────────── */
+  --purple:     #6D28D9;
+
+  /* ── Foreground / Text ───────────────────────────────────── */
+  --fg:   #0F172A;
+  --fg-2: #334155;
+  --fg-3: #64748B;
+  --fg-4: #CBD5E1;
+
+  /* ── Log Colors ──────────────────────────────────────────── */
+  --log-tx: #1D4ED8;
+  --log-dt: #047857;
+
+  /* ── Divider / Structural ────────────────────────────────── */
+  --divider: rgba(0, 0, 0, 0.08);
+
+  /* ── Legacy aliases ──────────────────────────────────────── */
+  --card:         var(--card-bg);
+  --card-hover:   var(--card-hover-bg);
+  --border:       var(--card-border);
+  --log-bg:       var(--bg);
+  --header-bg:    rgba(240, 244, 250, 0.97);
+}
+
+/* ── Light mode: invert logo so white → dark on light bg ──── */
+body[data-theme="light"] .titlebar-logo {
+  filter: invert(1) brightness(0.15);
+}
+
+/* ── Light mode: titlebar button hovers ─────────────────────── */
+body[data-theme="light"] .titlebar-controls button:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+/* ── Light mode: sidebar scrollbar track ───────────────────── */
+body[data-theme="light"] #sidebar::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+/* ── Theme toggle button ────────────────────────────────────── */
+#btn-theme {
+  -webkit-app-region: no-drag;
+  width: 36px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+#btn-theme:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+}
+
+/* ============================================================
+   END OF STYLE.CSS
+   BibleCue — Premium Modern Dark UI
+   ============================================================ */

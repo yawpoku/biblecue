@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BibleCue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="../assets/bLogo.png">
+</head>
+<body>
+
+  <!-- CUSTOM TITLEBAR (frameless window) -->
+  <div id="titlebar" data-version="2.0">
+    <div class="titlebar-left">
+      <span class="cross-icon">
+        <img src="../assets/bLogo.png" alt="BibleCue" class="titlebar-logo">
+      </span>
+      <span class="app-name">BibleCue</span>
+    </div>
+    <div class="titlebar-controls">
+      <button id="btn-theme" title="Toggle light/dark mode">☀</button>
+      <button id="btn-minimize">—</button>
+      <button id="btn-maximize">⤢</button>
+      <button id="btn-close">✕</button>
+    </div>
+  </div>
+
+  <!-- GOLD ACCENT LINE -->
+  <div class="gold-line"></div>
+
+  <!-- APP LAYOUT: sidebar + main -->
+  <div id="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+
+      <!-- Mode Selection Card -->
+      <div class="card" id="card-mode">
+        <div class="card-header">
+          <span class="card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </span>
+          <span class="card-title">TRANSCRIPTION MODE</span>
+        </div>
+        <div class="radio-group">
+          <label class="radio-option" id="mode-google">
+            <input type="radio" name="mode" value="google" checked>
+            <span class="radio-custom"></span>
+            <div class="radio-content">
+              <span class="radio-label">Google Speech <span class="mode-badge mode-badge-free">FREE</span></span>
+              <span class="radio-desc">Browser · Free · No key needed</span>
+            </div>
+          </label>
+          <label class="radio-option" id="mode-deepgram">
+            <input type="radio" name="mode" value="deepgram">
+            <span class="radio-custom"></span>
+            <div class="radio-content">
+              <span class="radio-label">Deepgram <span class="mode-badge mode-badge-pro">PRO</span></span>
+              <span class="radio-desc">Real-time · 200hrs free/month</span>
+            </div>
+          </label>
+          <label class="radio-option" id="mode-whisper">
+            <input type="radio" name="mode" value="whisper">
+            <span class="radio-custom"></span>
+            <div class="radio-content">
+              <span class="radio-label">Whisper Local <span class="mode-badge mode-badge-offline">OFFLINE</span></span>
+              <span class="radio-desc">Offline · CPU · No internet</span>
+            </div>
+          </label>
+        </div>
+        <div id="mode-status" class="mode-status"></div>
+      </div>
+
+      <!-- Outputs Card -->
+      <div class="card card-collapsible" id="card-outputs">
+        <div class="card-header collapsible-header" id="outputs-toggle">
+          <span class="card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </span>
+          <span class="card-title">OUTPUTS</span>
+          <span class="collapse-arrow" id="outputs-arrow">▸</span>
+        </div>
+        <div class="collapsible-body" id="outputs-body">
+
+          <!-- Translation + Cooldown (moved here from old ProPresenter card) -->
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Translation</label>
+              <select id="sel-translation" class="sel">
+                <option>KJV</option>
+                <option>WEB</option>
+                <option>ASV</option>
+                <option>BBE</option>
+                <option>DARBY</option>
+                <option>YLT</option>
+                <option>NKJV</option>
+                <option>NIV</option>
+                <option>ESV</option>
+              </select>
+              <span class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px;display:block">NKJV/NIV/ESV use closest free equivalent</span>
+            </div>
+            <div class="form-row">
+              <label>Cooldown (s)</label>
+              <input type="number" id="inp-cooldown" min="1" max="60" class="inp inp-sm">
+            </div>
+          </div>
+
+          <div class="adv-divider"></div>
+
+          <!-- ProPresenter -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-pp-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">ProPresenter 7</span>
+              <button class="output-expand-btn" data-target="out-pp-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-pp-cfg">
+              <div class="form-row"><label>IP</label><input type="text" id="out-pp-ip" class="inp" placeholder="192.168.1.100"></div>
+              <div class="form-row"><label>Port</label><input type="text" id="out-pp-port" class="inp inp-sm" placeholder="1025"></div>
+              <div class="form-row"><label>Message UUID</label><input type="text" id="out-pp-uuid" class="inp inp-mono" placeholder="uuid..."></div>
+            </div>
+          </div>
+
+          <!-- Clipboard -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-clip-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">Clipboard</span>
+            </div>
+          </div>
+
+          <!-- HTTP Webhook -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-webhook-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">HTTP Webhook</span>
+              <button class="output-expand-btn" data-target="out-webhook-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-webhook-cfg">
+              <div class="form-row"><label>URL</label><input type="text" id="out-webhook-url" class="inp" placeholder="http://..."></div>
+            </div>
+          </div>
+
+          <!-- Text File -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-file-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">Text File</span>
+              <button class="output-expand-btn" data-target="out-file-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-file-cfg">
+              <div class="form-row"><label>Path</label><input type="text" id="out-file-path" class="inp" placeholder="C:\verse.txt"></div>
+            </div>
+          </div>
+
+          <!-- OBS WebSocket -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-obs-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">OBS Studio</span>
+              <button class="output-expand-btn" data-target="out-obs-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-obs-cfg">
+              <div class="form-row"><label>IP</label><input type="text" id="out-obs-ip" class="inp" placeholder="127.0.0.1"></div>
+              <div class="form-row"><label>Port</label><input type="text" id="out-obs-port" class="inp inp-sm" placeholder="4455"></div>
+              <div class="form-row"><label>Password</label><input type="password" id="out-obs-password" class="inp"></div>
+              <div class="form-row"><label>Text Source</label><input type="text" id="out-obs-source" class="inp" placeholder="BibleVerse"></div>
+            </div>
+          </div>
+
+          <!-- TCP Raw -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-tcp-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">TCP Raw</span>
+              <button class="output-expand-btn" data-target="out-tcp-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-tcp-cfg">
+              <div class="form-row"><label>IP</label><input type="text" id="out-tcp-ip" class="inp"></div>
+              <div class="form-row"><label>Port</label><input type="text" id="out-tcp-port" class="inp inp-sm"></div>
+            </div>
+          </div>
+
+          <div id="save-indicator" class="save-indicator">✓ Saved</div>
+        </div>
+      </div>
+
+      <!-- Advanced Settings (collapsible) -->
+      <div class="card card-collapsible" id="card-advanced">
+        <div class="card-header collapsible-header" id="adv-toggle">
+          <span class="card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          </span>
+          <span class="card-title">ADVANCED SETTINGS</span>
+          <span class="collapse-arrow" id="adv-arrow">▸</span>
+        </div>
+        <div class="collapsible-body" id="adv-body">
+
+          <!-- Deepgram Key -->
+          <div class="adv-section">
+            <div class="adv-section-title">⚡ Deepgram API Key</div>
+            <div class="form-row">
+              <div class="input-with-btn">
+                <input type="password" id="inp-dg-key" placeholder="Get free at console.deepgram.com" class="inp">
+                <button id="btn-show-key" class="btn-icon" title="Show/hide key">👁</button>
+              </div>
+            </div>
+            <div id="dg-status" class="dg-status"></div>
+          </div>
+
+          <div class="adv-divider"></div>
+
+          <!-- Whisper Model -->
+          <div class="adv-section">
+            <div class="adv-section-title">💻 Whisper Local Model</div>
+            <div class="form-row">
+              <select id="sel-whisper-model" class="sel">
+                <option value="tiny">tiny (fastest, low accuracy)</option>
+                <option value="base" selected>base (fast, OK accuracy)</option>
+                <option value="small">small</option>
+                <option value="medium">medium (recommended)</option>
+                <option value="large-v3">large-v3 (best, needs GPU)</option>
+              </select>
+              <div class="form-row" style="margin-top:6px">
+                <label>Compute Device</label>
+                <select id="sel-compute-device" class="sel">
+                  <option value="cpu">CPU</option>
+                  <option value="cuda">CUDA (NVIDIA GPU)</option>
+                  <option value="auto">Auto</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="adv-divider"></div>
+
+          <!-- Audio Device -->
+          <div class="adv-section">
+            <div class="adv-section-title">🎤 Input Device</div>
+            <div class="form-row">
+              <select id="sel-device" class="sel sel-wide">
+                <option value="-1">Default</option>
+              </select>
+            </div>
+            <div id="dev-status" class="dev-status"></div>
+          </div>
+
+          <div class="adv-divider"></div>
+
+          <!-- Manual Verse -->
+          <div class="adv-section">
+            <div class="adv-section-title">📖 Send Verse Manually</div>
+            <div class="manual-row">
+              <input type="text" id="inp-manual" placeholder="e.g. John 3:16 · Psalm 23 · next verse" class="inp">
+              <button id="btn-manual-send" class="btn-send">Send →</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Listen Control -->
+      <div class="card" id="card-control">
+        <div id="dg-status-main" class="dg-status-main"></div>
+        <div class="listen-status-row">
+          <div class="pulse-dot" id="pulse-dot"></div>
+          <span id="listen-label">Not listening</span>
+        </div>
+        <div id="waveform-bars" class="waveform-bars"><span></span><span></span><span></span><span></span><span></span></div>
+        <button id="btn-listen" class="btn-listen btn-listen-start">
+          ▶&nbsp;&nbsp;Start Listening
+        </button>
+        <div class="autostart-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-autostart">
+            <span class="checkbox-custom"></span>
+            Auto-start on open
+          </label>
+        </div>
+        <div id="listener-url-row" class="listener-url-row" style="display:none">
+          <span class="listener-url-label">Listener:</span>
+          <a id="listener-url-link" class="listener-url-link" href="#">—</a>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- VERTICAL DIVIDER -->
+    <div class="layout-divider"></div>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content">
+
+      <!-- NOW ON SCREEN panel -->
+      <div id="now-on-screen">
+        <div class="verse-glow"></div>
+        <div class="now-header">
+          <span class="now-label">NOW ON SCREEN</span>
+          <span class="now-hints">next · previous · verse 5 · next chapter</span>
+          <button id="btn-fullscreen" class="btn-fullscreen" title="Open live scripture in a new window">⛶ Fullscreen</button>
+          <button id="btn-copy-verse" class="btn-copy-verse" title="Copy verse">⎘</button>
+        </div>
+        <div id="verse-text" class="verse-text">—</div>
+        <div id="verse-ref" class="verse-ref"></div>
+      </div>
+
+      <!-- Log panels -->
+      <div id="log-panels">
+
+        <div class="log-panel" id="panel-transcript">
+          <div class="log-header log-header-blue">
+            <span>🎤&nbsp; Live Transcript</span>
+            <span id="tx-count" class="log-count">0</span>
+            <button class="btn-clear-log" data-target="transcript-log" title="Clear">✕</button>
+          </div>
+          <div id="transcript-log" class="log-body"></div>
+        </div>
+
+        <div class="log-panel" id="panel-detection">
+          <div class="log-header log-header-green">
+            <span>📖&nbsp; Scripture Detection</span>
+            <span id="dt-count" class="log-count">0</span>
+            <button class="btn-clear-log" data-target="detection-log" title="Clear">✕</button>
+          </div>
+          <div id="detection-log" class="log-body"></div>
+        </div>
+
+      </div>
+
+      <!-- Bottom status bar -->
+      <div id="statusbar">
+        <div class="status-left">
+          <span id="status-dot" class="status-dot"></span>
+          <span id="status-text">Ready</span>
+        </div>
+        <div class="status-right">
+          <div class="status-backend" id="status-backend"><span class="backend-dot" id="backend-dot"></span><span id="backend-text">Backend</span></div>
+          <span id="status-version">BibleCue v1.1.1</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

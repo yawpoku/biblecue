@@ -1,0 +1,41 @@
+# Dependencies
+biblecue-desktop/node_modules/
+
+# Build output
+biblecue-desktop/dist/
+biblecue-desktop/python/backend.exe
+build/
+build_tmp/
+dist/
+dist2/
+__pycache__/
+*.pyc
+*.pyo
+
+# User data & settings
+biblecue_settings.json
+probible_settings.json
+bibleshow_settings.json
+verse_cache.json
+bible_local/
+resources/bible.db
+
+# Logs & temp
+*.log
+tmp_fallback.wav
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Old versions
+old/
+standalone/
+WCIBiblePREVIOUS/

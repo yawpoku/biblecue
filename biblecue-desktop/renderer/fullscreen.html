@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BibleCue — Live Scripture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+      background: #060B18;
+      color: #F8FAFC;
+      font-family: 'Space Grotesk', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 80px;
+      position: relative;
+    }
+
+    /* Subtle radial glow behind verse */
+    .glow {
+      position: absolute;
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .verse-block {
+      position: relative;
+      text-align: center;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    #verse-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4vw, 64px);
+      font-weight: 500;
+      line-height: 1.45;
+      color: #F8FAFC;
+      letter-spacing: 0.01em;
+      transition: opacity 0.4s ease;
+    }
+
+    #verse-text.empty {
+      color: rgba(248,250,252,0.2);
+      font-style: italic;
+      font-size: clamp(18px, 2vw, 28px);
+    }
+
+    #verse-ref {
+      margin-top: 28px;
+      font-size: clamp(13px, 1.4vw, 22px);
+      font-weight: 500;
+      color: #F59E0B;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: opacity 0.4s ease;
+    }
+
+    .gold-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #F59E0B 30%, #F59E0B 70%, transparent);
+    }
+
+    .status-bar {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: rgba(248,250,252,0.35);
+      letter-spacing: 0.06em;
+    }
+
+    .conn-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #EF4444;
+      transition: background 0.3s;
+    }
+    .conn-dot.connected { background: #10B981; }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .verse-updated {
+      animation: fade-in 0.4s ease forwards;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <div class="status-bar">
+    <div class="conn-dot" id="conn-dot"></div>
+    <span id="conn-text">Connecting…</span>
+  </div>
+
+  <div class="verse-block">
+    <div id="verse-text" class="empty">Waiting for scripture…</div>
+    <div id="verse-ref"></div>
+  </div>
+
+  <div class="gold-line"></div>
+
+  <script>
+    const verseEl = document.getElementById('verse-text');
+    const refEl   = document.getElementById('verse-ref');
+    const dotEl   = document.getElementById('conn-dot');
+    const connEl  = document.getElementById('conn-text');
+
+    const WS_URL = 'ws://127.0.0.1:8765';
+    let ws = null;
+    let retryDelay = 1000;
+
+    function connect() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        retryDelay = 1000;
+        dotEl.classList.add('connected');
+        connEl.textContent = 'Live';
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'verse_display') {
+            showVerse(msg.verse_text, msg.reference, msg.translation);
+          }
+        } catch {}
+      };
+
+      ws.onclose = () => {
+        dotEl.classList.remove('connected');
+        connEl.textContent = 'Reconnecting…';
+        setTimeout(connect, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 10000);
+      };
+
+      ws.onerror = () => {};
+    }
+
+    function showVerse(text, ref, translation) {
+      verseEl.classList.remove('empty', 'verse-updated');
+      void verseEl.offsetWidth; // reflow
+
+      if (text && text !== '—') {
+        verseEl.textContent = text;
+        refEl.textContent   = ref ? `${ref}${translation ? '  ·  ' + translation : ''}` : '';
+      } else {
+        verseEl.textContent = 'Waiting for scripture…';
+        verseEl.classList.add('empty');
+        refEl.textContent = '';
+      }
+
+      verseEl.classList.add('verse-updated');
+      refEl.classList.add('verse-updated');
+      setTimeout(() => {
+        verseEl.classList.remove('verse-updated');
+        refEl.classList.remove('verse-updated');
+      }, 500);
+    }
+
+    connect();
+  </script>
+</body>
+</html>

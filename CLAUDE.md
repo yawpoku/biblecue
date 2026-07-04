@@ -1,17 +1,17 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with code in this repository.
 
 ## What this app does
 
-**WCI BibleShow** is a church broadcast tool that listens to a preacher's microphone in real-time, detects Bible scripture references from speech, fetches the verse text, and sends it to **ProPresenter** (church presentation software) via its WebSocket API. It is packaged as an Electron desktop app with a Python backend.
+**BibleCue** is a church broadcast tool that listens to a preacher's microphone in real-time, detects Bible scripture references from speech, fetches the verse text, and sends it to **ProPresenter** (church presentation software) via its HTTP API. It is packaged as an Electron desktop app with a Python backend.
 
 ## Running in development
 
 ```bash
-cd electron-app
+cd biblecue-desktop
 npm install        # first time only
-npm start          # launches Electron + spawns Python backend automatically
+npm start          # launches Electron + spawns ../biblecue.py automatically
 ```
 
 Python dependencies (install once):
@@ -22,37 +22,40 @@ pip install faster-whisper sounddevice numpy scipy requests python-scriptures we
 ## Building for distribution
 
 ```bash
-# Electron installer (Windows .exe via NSIS)
-cd electron-app
-npm run build
+# 1. Build the Python backend into a standalone .exe (requires Python 3.11 + PyInstaller)
+pyinstaller backend.spec        # from project root — produces dist/backend.exe
 
-# Standalone Python executable (no Electron — legacy mode)
-python build.py    # from project root; produces dist/WCIBibleShow.exe
+# 2. Copy it into the Electron app
+copy dist\backend.exe biblecue-desktop\python\backend.exe
+
+# 3. Build the Windows NSIS installer
+cd biblecue-desktop
+npm run build                   # produces dist/BibleCue Setup x.y.z.exe
 ```
 
 ## Architecture
 
-The app has two independent layers that communicate over a local WebSocket:
+Two independent layers communicating over a local WebSocket:
 
 ```
-WCIBibleshow.py  (Python backend, port 8765)
+biblecue.py  (Python backend, port 8765)
       │  WebSocket ws://127.0.0.1:8765
       ▼
-electron-app/renderer/app.js  (Electron frontend)
+biblecue-desktop/renderer/app.js  (Electron frontend)
 ```
 
-### Python backend (`WCIBibleshow.py`)
-- Single large file (~2000 lines). Contains all logic: speech transcription, scripture detection, ProPresenter integration, settings persistence, and the WebSocket server.
-- Starts a WebSocket server on `ws_port` from settings (default **8765** in `probible_settings.json`).
+### Python backend (`biblecue.py`)
+- Single large file (~3200 lines). Contains all logic: speech transcription, scripture detection, ProPresenter delivery, settings persistence, and the WebSocket server.
+- Starts a WebSocket server on `ws_port` from settings (default **8765** in `biblecue_settings.json`).
 - Also starts a local HTTP server on port **8766** serving a browser page that uses the Web Speech API for Google transcription mode.
-- Three transcription engines: **Google Speech** (browser Web Speech API via the HTTP page), **Deepgram** (streaming WebSocket API), **Whisper** (local CPU via `faster-whisper`).
-- Settings are persisted to `probible_settings.json` at the project root.
+- Three transcription engines: **Google Speech** (browser Web Speech API), **Deepgram** (streaming cloud API), **Whisper** (local CPU via `faster-whisper`).
+- Output plugins are in `output_plugins.py` and handle ProPresenter, OBS, clipboard, HTTP webhook, text file, and TCP raw.
 
-### Electron frontend (`electron-app/`)
-- `main.js` — creates the BrowserWindow, spawns `WCIBibleshow.py` as a child process, handles IPC for window controls and python restart.
-- `renderer/app.js` — connects to `ws://127.0.0.1:8765`, sends/receives JSON messages, updates all UI state.
+### Electron frontend (`biblecue-desktop/`)
+- `main.js` — creates the BrowserWindow, spawns `biblecue.py` (dev) or `python/backend.exe` (packaged), handles window state.
+- `renderer/app.js` — connects to `ws://127.0.0.1:8765`, sends/receives JSON messages, updates UI.
 - `renderer/index.html` + `renderer/style.css` — single-page UI, no framework.
-- `preload.js` — exposes `window.electronAPI` (minimize/maximize/close) to the renderer via `contextBridge`.
+- `preload.js` — exposes `window.electronAPI` to renderer via `contextBridge`.
 
 ### WebSocket message protocol
 Frontend → Backend:
@@ -67,26 +70,31 @@ Backend → Frontend:
 - `{ type: "listening_state", active: bool }`
 - `{ type: "transcript", text, interim: bool }`
 - `{ type: "verse_display", verse_text, reference, translation }`
-- `{ type: "log", panel: "transcript"|"detection", text }`
+- `{ type: "log", panel: "transcript"|"detection", text, subtype: "info"|"fire"|"warn" }`
 - `{ type: "status", text, color }`
-- `{ type: "dg_status", text }`
 
 ### Python script path resolution (`main.js`)
-In dev: resolves `../WCIBibleshow.py` (one level above `electron-app/`).
-In packaged build: resolves `resources/python/backend.py`.
+- Dev mode: resolves `path.join(__dirname, '..', 'biblecue.py')`
+- Packaged mode: resolves `path.join(process.resourcesPath, 'python', 'backend.exe')`
 
-## Key settings (`probible_settings.json`)
+## Key settings (`biblecue_settings.json`)
 | Key | Default | Notes |
 |-----|---------|-------|
 | `ws_port` | `8765` | Must match `WS_URL` in `app.js` |
-| `pro_ip` / `pro_port` | — | ProPresenter machine address |
+| `pro_ip` / `pro_port` | — | ProPresenter machine IP and port |
 | `message_uuid` | — | ProPresenter message UUID to target |
-| `translation` | `KJV` | Bible translation for verse lookup |
+| `translation` | `KJV` | Bible translation |
 | `mode` | `google` | `google` / `deepgram` / `whisper` |
 | `cooldown_secs` | `12` | Min seconds between auto-sends |
 
-## UI structure (`renderer/`)
-- **Sidebar** (300px): transcription mode selector → ProPresenter settings → advanced settings (collapsible) → listen control with waveform
-- **Main** (flex 1): NOW ON SCREEN verse panel (hero, Playfair Display font) → split log panels (Live Transcript / Scripture Detection) → status bar
-- CSS uses CSS custom properties (`--bg`, `--gold`, `--blue`, etc.) defined in `:root`. Design tokens are the single source of truth for theming.
-- Collapsible advanced panel is controlled by toggling `.open` class on `.collapsible-body` and `.collapse-arrow` — do **not** use inline `style.maxHeight`.
+## Scripture detection pipeline
+1. **FAMOUS_PASSAGES** dict — catch well-known phrases ("for god so loved the world" → John 3:16)
+2. **normalise_spoken()** — convert spoken form to chapter:verse notation
+3. **extract_spoken_numbers()** — convert number words to digits
+4. **python-scriptures** library — regex-based reference parser
+5. **BOOK_PATTERN** regex — strict final pass with verse-1 filtering
+
+## Tests
+```bash
+python -m pytest tests/
+```
