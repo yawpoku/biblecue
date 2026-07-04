@@ -38,7 +38,12 @@ jobs:
 
       - name: Build Windows installer
         working-directory: biblecue-desktop
-        run: npm run build
+        env:
+          TEMP: D:\BuildTemp
+          TMP: D:\BuildTemp
+        run: |
+          New-Item -ItemType Directory -Force D:\BuildTemp | Out-Null
+          npm run build
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
