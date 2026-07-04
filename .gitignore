@@ -5,9 +5,9 @@ biblecue-desktop/node_modules/
 biblecue-desktop/dist/
 biblecue-desktop/python/backend.exe
 biblecue-desktop/python/backend
-build/
+/build/
 build_tmp/
-dist/
+/dist/
 dist2/
 __pycache__/
 *.pyc
