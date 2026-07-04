@@ -1,6 +1,6 @@
 @echo off
 echo ================================================
-echo  BibleCue v2.0 - Setup
+echo  BibleCue v1.1.1 - Setup
 echo ================================================
 echo.
 
@@ -53,8 +53,8 @@ echo.
 
 REM --- Python dependencies ---
 echo [4/4] Installing Python dependencies...
-echo  Installing core packages: websockets requests python-scriptures
-pip install websockets requests python-scriptures
+echo  Installing core packages: websockets requests python-scriptures Pillow
+pip install websockets requests python-scriptures Pillow
 if %errorlevel% neq 0 (
     echo  WARNING: Some Python packages may not have installed correctly.
     echo  Try running: pip install websockets requests python-scriptures
