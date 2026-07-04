@@ -231,7 +231,7 @@ function createWindow () {
     frame: false,
     titleBarStyle: 'hidden',
     backgroundColor: '#060B18',
-    icon: path.join(__dirname, 'assets', 'bLogo.png'),
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'bLogo.ico' : 'bLogo.png'),
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -360,7 +360,7 @@ ipcMain.handle('open-fullscreen', () => {
     width: 1280,
     height: 720,
     backgroundColor: '#060B18',
-    icon: path.join(__dirname, 'assets', 'bLogo.png'),
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'bLogo.ico' : 'bLogo.png'),
     title: 'BibleCue — Live Scripture',
     webPreferences: {
       nodeIntegration: false,
