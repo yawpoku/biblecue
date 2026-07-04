@@ -1,6 +1,6 @@
 @echo off
 echo ================================================
-echo  BibleCue v1.1.1 - Setup
+echo  BibleCue v1.2.0 - Setup
 echo ================================================
 echo.
 
