@@ -7,6 +7,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac --x64 --arm64",
     "pack": "electron-builder --dir"
   },
   "build": {
@@ -16,8 +17,24 @@
       "target": "nsis",
       "icon": "assets/bLogo.png"
     },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "assets/bLogo.png",
+      "category": "public.app-category.productivity"
+    },
     "extraResources": [
-      { "from": "python/backend.exe", "to": "python/backend.exe" }
+      {
+        "from": "python/backend.exe",
+        "to": "python/backend.exe",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "python/backend",
+        "to": "python/backend",
+        "filter": ["**/*"]
+      }
     ],
     "nsis": {
       "oneClick": false,
@@ -27,6 +44,11 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "installerHeaderIcon": "assets/bLogo.png"
+    },
+    "dmg": {
+      "title": "BibleCue ${version}",
+      "background": "assets/bLogo.png",
+      "window": { "width": 540, "height": 380 }
     }
   },
   "devDependencies": {

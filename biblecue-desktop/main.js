@@ -46,16 +46,15 @@ let mainWindow = null
 
 function getPythonScriptPath () {
   if (app.isPackaged) {
-    // Prefer bundled standalone exe (no Python needed)
-    const exePath = path.join(process.resourcesPath, 'python', 'backend.exe')
-    if (fs.existsSync(exePath)) return exePath
+    // Bundled standalone binary — Windows uses backend.exe, macOS/Linux use backend
+    const binaryName = process.platform === 'win32' ? 'backend.exe' : 'backend'
+    const binPath = path.join(process.resourcesPath, 'python', binaryName)
+    if (fs.existsSync(binPath)) return binPath
     return path.join(process.resourcesPath, 'python', 'backend.py')
   }
   // Development: biblecue.py lives one level up from biblecue-desktop/
   const devPath = path.join(__dirname, '..', 'biblecue.py')
   if (fs.existsSync(devPath)) return devPath
-  const devPathOld = path.join(__dirname, '..', 'WCIBibleshow.py')
-  if (fs.existsSync(devPathOld)) return devPathOld
   return path.join(__dirname, 'backend.py')
 }
 
@@ -70,12 +69,12 @@ function spawnPython () {
     return
   }
 
-  // If it's a standalone exe, spawn it directly — no Python needed
-  if (scriptPath.endsWith('.exe')) {
-    console.log(`[python] Spawning bundled exe: ${scriptPath}`)
+  // If it's a bundled standalone binary, spawn it directly — no Python needed
+  if (scriptPath.endsWith('.exe') || (!scriptPath.endsWith('.py') && !scriptPath.endsWith('.pyc'))) {
+    console.log(`[python] Spawning bundled binary: ${scriptPath}`)
     const proc = spawn(scriptPath, ['--headless'], {
       stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true
+      windowsHide: process.platform === 'win32'
     })
     proc.on('error', (err) => {
       console.error('[python] spawn error:', err.message)

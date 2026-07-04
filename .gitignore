@@ -4,6 +4,7 @@ biblecue-desktop/node_modules/
 # Build output
 biblecue-desktop/dist/
 biblecue-desktop/python/backend.exe
+biblecue-desktop/python/backend
 build/
 build_tmp/
 dist/

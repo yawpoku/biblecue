@@ -3,18 +3,16 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'          # triggers on v1.2.0, v1.2.1, etc.
+      - 'v*'
 
 jobs:
-  build:
+  # ── Windows build ─────────────────────────────────────────────────────────
+  build-windows:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -30,8 +28,7 @@ jobs:
       - name: Copy backend.exe into Electron app
         run: copy dist\backend.exe biblecue-desktop\python\backend.exe
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -43,29 +40,91 @@ jobs:
         working-directory: biblecue-desktop
         run: npm run build
 
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: biblecue-desktop/dist/BibleCue*.exe
+
+  # ── macOS build ───────────────────────────────────────────────────────────
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+
+      - name: Build backend (macOS binary)
+        run: pyinstaller backend.spec
+
+      - name: Copy backend into Electron app
+        run: cp dist/backend biblecue-desktop/python/backend && chmod +x biblecue-desktop/python/backend
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron dependencies
+        working-directory: biblecue-desktop
+        run: npm ci
+
+      - name: Build macOS DMG
+        working-directory: biblecue-desktop
+        run: npm run build:mac
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-dmg
+          path: biblecue-desktop/dist/BibleCue*.dmg
+
+  # ── Create GitHub Release with both artifacts ─────────────────────────────
+  release:
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: artifacts/
+
+      - name: Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-dmg
+          path: artifacts/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: BibleCue ${{ steps.version.outputs.VERSION }}
+          name: BibleCue ${{ github.ref_name }}
           body: |
-            ## BibleCue ${{ steps.version.outputs.VERSION }}
+            ## BibleCue ${{ github.ref_name }}
 
             Real-time Bible verse display for church services.
 
             ### Install
-            Download **BibleCue-Setup.exe** below and run it.
+            | Platform | Download |
+            |----------|---------|
+            | **Windows** | `BibleCue Setup *.exe` — run the installer, no setup needed |
+            | **macOS** | `BibleCue-*.dmg` — open and drag to Applications |
+
             No Python or technical setup required — everything is bundled.
 
-            ### What's included
+            ### Features
             - Automatic scripture detection from spoken speech
-            - ProPresenter 7+ integration
+            - ProPresenter 7+ integration (HTTP API)
             - Google Speech, Deepgram, and Whisper transcription modes
             - Offline verse lookup (KJV, WEB, ASV, BBE, YLT, DARBY)
-          files: |
-            biblecue-desktop/dist/BibleCue*.exe
+          files: artifacts/*
           draft: false
           prerelease: false

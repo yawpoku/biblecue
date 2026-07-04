@@ -8,6 +8,8 @@
 *.md text eol=lf
 *.txt text eol=lf
 *.bat text eol=crlf
+*.sh text eol=lf
+*.sh text working-tree-encoding=UTF-8
 *.exe binary
 *.png binary
 *.ico binary
