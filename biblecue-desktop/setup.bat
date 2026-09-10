@@ -60,8 +60,7 @@ if %errorlevel% neq 0 (
     echo  Try running: pip install websockets requests python-scriptures
 )
 echo.
-echo  NOTE: Optional packages for audio/transcription:
-echo    faster-whisper, sounddevice, scipy are only needed for Whisper mode.
+echo  NOTE: Optional packages for Deepgram mode (sounddevice, numpy, scipy):
 echo    To install them run: install-deps.bat
 echo.
 

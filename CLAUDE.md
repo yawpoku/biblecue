@@ -16,7 +16,7 @@ npm start          # launches Electron + spawns ../biblecue.py automatically
 
 Python dependencies (install once):
 ```bash
-pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 ```
 
 ## Building for distribution
@@ -48,7 +48,7 @@ biblecue-desktop/renderer/app.js  (Electron frontend)
 - Single large file (~3200 lines). Contains all logic: speech transcription, scripture detection, ProPresenter delivery, settings persistence, and the WebSocket server.
 - Starts a WebSocket server on `ws_port` from settings (default **8765** in `biblecue_settings.json`).
 - Also starts a local HTTP server on port **8766** serving a browser page that uses the Web Speech API for Google transcription mode.
-- Three transcription engines: **Google Speech** (browser Web Speech API), **Deepgram** (streaming cloud API), **Whisper** (local CPU via `faster-whisper`).
+- Two transcription engines: **Google Speech** (browser Web Speech API) and **Deepgram** (streaming cloud API).
 - Output plugins are in `output_plugins.py` and handle ProPresenter, OBS, clipboard, HTTP webhook, text file, and TCP raw.
 
 ### Electron frontend (`biblecue-desktop/`)
@@ -84,7 +84,7 @@ Backend → Frontend:
 | `pro_ip` / `pro_port` | — | ProPresenter machine IP and port |
 | `message_uuid` | — | ProPresenter message UUID to target |
 | `translation` | `KJV` | Bible translation |
-| `mode` | `google` | `google` / `deepgram` / `whisper` |
+| `mode` | `google` | `google` / `deepgram` |
 | `cooldown_secs` | `12` | Min seconds between auto-sends |
 
 ## Scripture detection pipeline

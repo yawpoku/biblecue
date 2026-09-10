@@ -8,7 +8,7 @@ Real-time Bible scripture display for church services. Listens to a preacher's m
 - Supports accented speech (West African, Caribbean, South Asian English)
 - Offline verse lookup — no internet required for KJV, WEB, ASV, BBE, YLT, DARBY
 - Multiple output targets: ProPresenter, OBS Studio, Clipboard, HTTP Webhook, Text File, TCP
-- Three transcription engines: Google Speech (free), Deepgram (real-time), Whisper (offline, accent-robust)
+- Two transcription engines: Google Speech (free, browser) and Deepgram (real-time, 200 hrs/month free)
 
 ## Download
 
@@ -33,7 +33,7 @@ Requirements: Node.js 18+, Python 3.10+
 
 ```bash
 # Install Python dependencies
-pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 
 # Install Node dependencies
 cd biblecue-desktop

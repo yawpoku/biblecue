@@ -20,7 +20,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 
       - name: Build backend.exe
         run: pyinstaller backend.spec
@@ -65,7 +65,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 
       - name: Build backend (macOS binary)
         run: pyinstaller backend.spec
@@ -130,7 +130,7 @@ jobs:
             ### Features
             - Automatic scripture detection from spoken speech
             - ProPresenter 7+ integration (HTTP API)
-            - Google Speech, Deepgram, and Whisper transcription modes
+            - Google Speech and Deepgram transcription modes
             - Offline verse lookup (KJV, WEB, ASV, BBE, YLT, DARBY)
           files: artifacts/*
           draft: false

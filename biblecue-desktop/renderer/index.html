@@ -62,14 +62,6 @@
               <span class="radio-desc">Real-time · 200hrs free/month</span>
             </div>
           </label>
-          <label class="radio-option" id="mode-whisper">
-            <input type="radio" name="mode" value="whisper">
-            <span class="radio-custom"></span>
-            <div class="radio-content">
-              <span class="radio-label">Whisper Local <span class="mode-badge mode-badge-offline">OFFLINE</span></span>
-              <span class="radio-desc">Offline · CPU · No internet</span>
-            </div>
-          </label>
         </div>
         <div id="mode-status" class="mode-status"></div>
       </div>
@@ -227,30 +219,6 @@
               </div>
             </div>
             <div id="dg-status" class="dg-status"></div>
-          </div>
-
-          <div class="adv-divider"></div>
-
-          <!-- Whisper Model -->
-          <div class="adv-section">
-            <div class="adv-section-title">💻 Whisper Local Model</div>
-            <div class="form-row">
-              <select id="sel-whisper-model" class="sel">
-                <option value="tiny">tiny (fastest, low accuracy)</option>
-                <option value="base" selected>base (fast, OK accuracy)</option>
-                <option value="small">small</option>
-                <option value="medium">medium (recommended)</option>
-                <option value="large-v3">large-v3 (best, needs GPU)</option>
-              </select>
-              <div class="form-row" style="margin-top:6px">
-                <label>Compute Device</label>
-                <select id="sel-compute-device" class="sel">
-                  <option value="cpu">CPU</option>
-                  <option value="cuda">CUDA (NVIDIA GPU)</option>
-                  <option value="auto">Auto</option>
-                </select>
-              </div>
-            </div>
           </div>
 
           <div class="adv-divider"></div>

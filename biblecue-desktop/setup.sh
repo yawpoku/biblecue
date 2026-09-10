@@ -42,8 +42,8 @@ echo "[4/4] Installing Python dependencies..."
 echo " Installing core packages: websockets requests python-scriptures Pillow"
 $PYTHON -m pip install websockets requests python-scriptures Pillow
 echo
-echo " NOTE: Optional packages for audio/transcription:"
-echo "   Run install-deps.sh to install sounddevice, numpy, scipy, faster-whisper"
+echo " NOTE: Optional packages for Deepgram mode:"
+echo "   Run install-deps.sh to install sounddevice, numpy, scipy"
 echo
 
 echo "================================================"

@@ -35,8 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     selTranslation:   document.getElementById('sel-translation'),
     inpCooldown:      document.getElementById('inp-cooldown'),
     inpDgKey:         document.getElementById('inp-dg-key'),
-    selWhisperModel:  document.getElementById('sel-whisper-model'),
-    selComputeDevice: document.getElementById('sel-compute-device'),
     selDevice:        document.getElementById('sel-device'),
     chkAutostart:     document.getElementById('chk-autostart'),
     saveIndicator:    document.getElementById('save-indicator'),
@@ -316,8 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setVal(dom.selTranslation,  data.translation);
     setVal(dom.inpCooldown,     data.cooldown_secs);
     setVal(dom.inpDgKey,        data.deepgram_key);
-    setVal(dom.selWhisperModel, data.whisper_model);
-    setVal(dom.selComputeDevice, data.compute_device);
     setChk(dom.chkAutostart,    data.autostart);
 
     // Mode radio buttons
@@ -412,8 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
       translation:   dom.selTranslation ? dom.selTranslation.value          : 'KJV',
       cooldown_secs: dom.inpCooldown    ? Number(dom.inpCooldown.value)     : 8,
       deepgram_key:  dom.inpDgKey       ? dom.inpDgKey.value.trim()         : '',
-      whisper_model: dom.selWhisperModel? dom.selWhisperModel.value         : 'base',
-      compute_device: dom.selComputeDevice ? dom.selComputeDevice.value : 'cpu',
       audio_device:  dom.selDevice      ? Number(dom.selDevice.value)       : -1,
       autostart:     dom.chkAutostart   ? dom.chkAutostart.checked          : false,
       mode:          modeEl             ? modeEl.value                      : 'google',
@@ -720,8 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.selTranslation,
     dom.inpCooldown,
     dom.inpDgKey,
-    dom.selWhisperModel,
-    dom.selComputeDevice,
     dom.selDevice,
     dom.chkAutostart,
     dom.outPpIp, dom.outPpPort, dom.outPpUuid,

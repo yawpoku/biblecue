@@ -15,10 +15,9 @@ https://github.com/your-username/biblecue
   LINE  ~360   FAMOUS PASSAGES   — add "the shepherd psalm"-style lookups HERE
   LINE  ~415   BIBLE BOOKS       — add accent/mishearing aliases HERE
   LINE  ~770   SCRIPTURE PARSER  — parse_scripture() main detection function
-  LINE  ~825   BIBLE API         — fetch_verse() with SQLite + HTTP fallback
+  LINE  ~825   BIBLE API         — fetch_verse() with local JSON + HTTP fallback
   LINE  ~930   WS SERVER         — receives transcripts from browser listener
   LINE  ~985   HTTP SERVER       — serves the browser listener HTML page
-  LINE  ~1035  WHISPER           — local offline transcription engine
   LINE  ~1165  DEEPGRAM          — real-time cloud transcription engine
   LINE  ~1315  PROBIBLEAPP       — legacy tkinter desktop UI (standalone mode)
   LINE  ~2255  HEADLESSAPP       — Electron mode (primary — this is what runs)
@@ -30,7 +29,7 @@ https://github.com/your-username/biblecue
   Add a book alias:      BIBLE_BOOKS dict  (~line 415)
   Add a famous passage:  FAMOUS_PASSAGES dict (~line 360)
   Add an output plugin:  output_plugins.py (separate file)
-  Add a STT engine:      subclass pattern — see WhisperListener / DeepgramListener
+  Add a STT engine:      subclass pattern — see DeepgramListener
   Change the UI:         biblecue-desktop/renderer/  (HTML + CSS + JS, no framework)
 
 ─────────────────────────────────────────────
@@ -43,7 +42,7 @@ https://github.com/your-username/biblecue
 ─────────────────────────────────────────────
   REQUIREMENTS
 ─────────────────────────────────────────────
-  pip install faster-whisper sounddevice numpy scipy requests python-scriptures websockets Pillow
+  pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 """
 
 import os
@@ -70,13 +69,6 @@ except ImportError:
     import subprocess
     subprocess.run([sys.executable, "-m", "pip", "install", "python-scriptures"], check=False)
     import scriptures
-
-# Optional — only used as fallback if browser not available
-try:
-    from faster_whisper import WhisperModel
-    WHISPER_AVAILABLE = True
-except ImportError:
-    WHISPER_AVAILABLE = False
 
 try:
     import sounddevice as sd
@@ -172,9 +164,7 @@ DEFAULT_SETTINGS = {
     "pro_port":      "1025",
     "message_uuid":  "",
     "translation":   "KJV",
-    "mode":          "google",    # "google" | "deepgram" | "whisper"
-    "whisper_model": "base",
-    "compute_device":   "cpu",   # "cpu" | "cuda" | "auto"
+    "mode":          "google",    # "google" | "deepgram"
     "deepgram_key":  "",
     "cooldown_secs": 8,
     "ws_port":       8765,
@@ -1530,150 +1520,6 @@ def start_http_server(html: str, port: int = 8766):
     t.start()
     return port
 
-# ═══════════════════════════════════════════════════════════════
-#  WHISPER LISTENER  (~line 1035)
-#  Local offline transcription using faster-whisper.
-#  Best for accented speech when paired with the church-tuned
-#  initial_prompt in _worker(). Supports CPU and CUDA (GPU).
-#  Model sizes: tiny / base / small / medium / large-v3
-#  To improve accuracy for a specific accent, extend the
-#  initial_prompt in _worker() with more book names.
-# ═══════════════════════════════════════════════════════════════
-class WhisperListener:
-    def __init__(self, model_name: str, on_transcript, device_id=-1):
-        self.on_transcript = on_transcript
-        self.device_id = device_id
-        self.model     = None
-        self.listening = False
-        self.fs        = 16000
-        self._q        = queue.Queue(maxsize=3)
-        self._ring     = collections.deque(maxlen=self.fs * 8)
-        self._lock     = threading.Lock()
-        self._compute = "cpu"  # overridden by caller via HeadlessApp
-        self._load(model_name)
-
-    def _load(self, name):
-        def _go():
-            try:
-                device = getattr(self, '_compute', 'cpu')
-                compute_type = "float16" if device in ("cuda", "auto") else "int8"
-                self.model = WhisperModel(name, device=device, compute_type=compute_type)
-            except Exception as e:
-                print(f"Whisper load error: {e}")
-        threading.Thread(target=_go, daemon=True).start()
-
-    def start(self, device_id=None):
-        if not AUDIO_AVAILABLE:
-            return
-        if device_id is not None:
-            self.device_id = device_id
-        self.listening = True
-        
-        # Use specific device if provided, else default
-        dev = self.device_id if self.device_id >= 0 else None
-        
-        try:
-            di = sd.query_devices(dev if dev is not None else sd.default.device[0])
-            native_rate = int(di["default_samplerate"])
-            native_ch   = min(int(di["max_input_channels"]), 2)
-        except Exception:
-            native_rate, native_ch = 44100, 2
-        self._native_rate = native_rate
-        self._native_ch   = native_ch
-        self._stream = sd.InputStream(
-            device=dev, samplerate=native_rate, channels=native_ch,
-            dtype="float32", blocksize=int(native_rate * 0.1),
-            callback=self._audio_cb)
-        self._stream.start()
-        threading.Thread(target=self._loop, daemon=True).start()
-        threading.Thread(target=self._worker, daemon=True).start()
-
-    def stop(self):
-        self.listening = False
-        if hasattr(self, '_stream'):
-            self._stream.stop(); self._stream.close()
-        # Drain pending audio so _worker doesn't process stale chunks
-        while not self._q.empty():
-            try:
-                self._q.get_nowait()
-            except queue.Empty:
-                break
-
-    def _audio_cb(self, indata, frames, time_info, status):
-        import numpy as _np
-        nr = getattr(self, "_native_rate", 16000)
-        nc = getattr(self, "_native_ch", 1)
-        mono = indata.mean(axis=1) if nc > 1 else indata[:, 0]
-        if nr != self.fs:
-            n_out = int(len(mono) * self.fs / nr)
-            if n_out > 0:
-                idx = _np.clip((_np.arange(n_out) * nr / self.fs).astype(_np.int32), 0, len(mono)-1)
-                mono = mono[idx]
-        with self._lock:
-            self._ring.extend(mono.tolist())
-
-    def _loop(self):
-        chunk = 4
-        while self.listening:
-            time.sleep(chunk)
-            with self._lock:
-                arr = list(self._ring)
-            if len(arr) < self.fs * 2:
-                continue
-            data = np.array(arr[-self.fs*chunk:], dtype=np.float32)
-            rms = float(np.sqrt(np.mean(data**2)))
-            if rms < 0.005:  # Lowered from 0.012
-                continue
-            
-            try:
-                self._q.put_nowait(data.copy())
-            except queue.Full:
-                pass
-
-    def _worker(self):
-        recent = []
-        while True:
-            data = self._q.get()
-            if not self.listening:
-                continue  # discard stale chunks after stop()
-            if self.model is None:
-                continue
-            try:
-                segs, _ = self.model.transcribe(
-                    data, beam_size=2, temperature=0.0,
-                    condition_on_previous_text=False,
-                    vad_filter=True,
-                    initial_prompt=(
-                        "Scripture: Genesis, Exodus, Leviticus, Numbers, Deuteronomy, Joshua, Judges, "
-                        "Ruth, Samuel, Kings, Chronicles, Ezra, Nehemiah, Esther, Job, Psalms, Psalm, Salm, "
-                        "Proverbs, Ecclesiastes, Isaiah, Jeremiah, Lamentations, Ezekiel, Daniel, Hosea, "
-                        "Joel, Amos, Obadiah, Jonah, Micah, Nahum, Habakkuk, Zephaniah, Haggai, Zechariah, "
-                        "Malachi, Matthew, Mark, Luke, John, Acts, Romans, Corinthians, Galatians, Ephesians, "
-                        "Philippians, Colossians, Thessalonians, Timothy, Titus, Philemon, Hebrews, James, "
-                        "Peter, Jude, Revelation. "
-                        "John three sixteen. Psalm twenty-three. Genesis one one. Philippians four thirteen."
-                    ),
-                )
-                text = " ".join(s.text for s in segs).strip()
-                if not text or len(text.split()) < 3:
-                    continue
-                # Loop filter
-                words = re.findall(r'\b\w+\b', text.lower())
-                if words:
-                    counts = collections.Counter(words)
-                    mc_word, mc_count = counts.most_common(1)[0]
-                    if mc_count / len(words) > 0.40:
-                        continue
-                # Dedup
-                now = time.time()
-                recent = [(t, ts) for t, ts in recent if now - ts < 15]
-                if any(t == text for t, _ in recent):
-                    continue
-                recent.append((text, now))
-                self.on_transcript(text)
-            except Exception as _e:
-                self.on_transcript(f"[Whisper error: {_e}]")
-
 # ─────────────────────────────────────────────────────────────
 #  APP
 # ─────────────────────────────────────────────────────────────
@@ -1860,7 +1706,6 @@ class ProBibleApp:
         # avoids TCP handshake on every verse (saves ~100ms per send)
         self._pro_session = requests.Session()
         self._ws_server  = None
-        self._whisper    = None
         self._deepgram   = None
         self._http_port  = None
 
@@ -1884,16 +1729,6 @@ class ProBibleApp:
         # Auto-start if enabled
         if self.settings.get("autostart", False):
             self.root.after(1500, self._toggle_listening)
-
-        # Pre-load Whisper in background so it is ready when selected
-        if WHISPER_AVAILABLE and AUDIO_AVAILABLE:
-            self._whisper = WhisperListener(
-                self.settings.get("whisper_model", "base"),
-                self._on_transcript,
-                device_id=self.settings.get("audio_device", -1))
-            self._logd("Whisper model loading in background...")
-        else:
-            self._logd("Whisper not available (pip install faster-whisper sounddevice)")
 
     # ── UI ───────────────────────────────────────────────────
     def _ent(self, parent, var, width=20, font=None):
@@ -2104,7 +1939,6 @@ class ProBibleApp:
         for val, icon, label in [
             ("google",   "\U0001f310", "Google Speech  (browser)"),
             ("deepgram", "\u26a1", "Deepgram  (real-time)"),
-            ("whisper",  "\U0001f4bb", "Whisper  (offline)"),
         ]:
             rb_row = tk.Frame(mode_card, bg=C["card"])
             rb_row.pack(fill="x", pady=2)
@@ -2227,25 +2061,6 @@ class ProBibleApp:
                                        font=F["caption"], bg=C["card"], fg=C["purple"])
         self.dg_status_lbl.pack(anchor="w", pady=(4, 0))
         self.dg_frame = dg_sec
-        tk.Frame(self._adv_body, bg=C["divider"], height=1).pack(fill="x")
-
-        # ── Whisper model ─────────────────────────────────────
-        wh_sec = tk.Frame(self._adv_body, bg=C["card"], padx=12, pady=10)
-        wh_sec.pack(fill="x")
-        tk.Label(wh_sec, text="\U0001f4bb  Whisper Local Model",
-                 font=F["body_b"], bg=C["card"], fg=C["blue"]).pack(
-            anchor="w", pady=(0, 6))
-        wr = tk.Frame(wh_sec, bg=C["card"])
-        wr.pack(fill="x")
-        tk.Label(wr, text="Model:", font=F["caption"],
-                 bg=C["card"], fg=C["fg2"]).pack(side="left")
-        self.whisper_model_var = tk.StringVar(value=self.settings["whisper_model"])
-        ttk.Combobox(wr, textvariable=self.whisper_model_var,
-                     values=["tiny","base","small"],
-                     width=8, state="readonly").pack(side="left", padx=(6, 12))
-        tk.Label(wr, text="tiny  \u00b7  base  \u00b7  small",
-                 font=F["caption"], bg=C["card"], fg=C["fg3"]).pack(side="left")
-        self.wf = wh_sec
         tk.Frame(self._adv_body, bg=C["divider"], height=1).pack(fill="x")
 
         # ── Audio Device ──────────────────────────────────────
@@ -2442,7 +2257,7 @@ class ProBibleApp:
     # ── AUTO-SAVE ────────────────────────────────────────────
     def _bind_autosave(self):
         for v in [self.ip_var, self.port_var, self.trans_var,
-                  self.uuid_var, self.cooldown_var, self.whisper_model_var,
+                  self.uuid_var, self.cooldown_var,
                   self.dg_key_var]:
             v.trace_add("write", self._on_setting_change)
 
@@ -2468,7 +2283,6 @@ class ProBibleApp:
                 "message_uuid":  self.uuid_var.get().strip(),
                 "translation":   self.trans_var.get(),
                 "mode":          self.mode_var.get(),
-                "whisper_model": self.whisper_model_var.get(),
                 "deepgram_key":  self.dg_key_var.get().strip(),
                 "autostart":     bool(self._autostart_var.get()),
                 "cooldown_secs": int(self.cooldown_var.get() or 12),
@@ -2520,7 +2334,7 @@ class ProBibleApp:
         self._ws_server.start()                          # resolves actual port
         html = get_listener_html(self._ws_server.port)  # use resolved port in HTML
         self._http_port = start_http_server(html, 8766)
-        self._logd("Ready - select mode and open browser or start Whisper/Deepgram")
+        self._logd("Ready - select mode and open browser or start Deepgram")
 
     def _open_browser(self):
         url = f"http://127.0.0.1:{self._http_port or 8766}"
@@ -2535,11 +2349,11 @@ class ProBibleApp:
         if self._deepgram:
             self._deepgram.stop()
             self._deepgram = None
-        if self._whisper and self._whisper.listening:
-            self._whisper.stop()
 
     def _start_selected_mode(self):
         mode = self.mode_var.get()
+        if mode not in ("google", "deepgram"):
+            mode = "google"
         self._stop_all_listeners()
 
         if mode == "google":
@@ -2571,21 +2385,6 @@ class ProBibleApp:
                     ws.broadcast({"type":"dg_mode","active":True})
                     self._logd("DG audio streaming activated")
             self.root.after(delay, _act)
-        elif mode == "whisper":
-            # Whisper: Python opens mic locally, transcribes on your CPU
-            self._logd("--- Whisper mode ---")
-            self._logd("Python opens your mic and transcribes locally.")
-            self._logd("No internet needed. Browser is NOT used.")
-            if self._whisper is None:
-                self._logd("ERROR: faster-whisper not installed")
-                self._logd("Run: pip install faster-whisper sounddevice")
-                return
-            if not self._whisper.model:
-                self._logd("Whisper model loading — will auto-start when ready...")
-                self.root.after(2000, self._retry_whisper_start)
-                return
-            self._whisper.start()
-            self._logd("Whisper listening on mic...")
 
     def _set_dg_status(self, msg):
         self.root.after(0, lambda: self.dg_status_lbl.configure(text=msg))
@@ -2602,21 +2401,6 @@ class ProBibleApp:
         self._autosave()
         self.dev_status.configure(text="✓ Updated (restart listening)", fg=self._C["green"])
         self.root.after(3000, lambda: self.dev_status.configure(text=""))
-
-    def _retry_whisper_start(self):
-        """Called when Whisper model was still loading at start time — retry automatically."""
-        if not getattr(self, '_listening', False):
-            return  # user stopped while we were waiting
-        if self.mode_var.get() != "whisper":
-            return  # mode changed while we were waiting
-        if self._whisper is None:
-            return
-        if not self._whisper.model:
-            self._logd("Still loading — retrying in 2s...")
-            self.root.after(2000, self._retry_whisper_start)
-            return
-        self._whisper.start()
-        self._logd("Whisper listening on mic...")
 
     # ── TOGGLE LISTENING ────────────────────────────────────
     def _toggle_listening(self):
@@ -2694,7 +2478,7 @@ class ProBibleApp:
         if nav_ref:
             self._process_refs([nav_ref], nav=True)
             return   # nav took it — skip scripture parse
-        # Scripture fallback for Whisper (no interim) and any missed interims
+        # Scripture fallback for finals with no interim and any missed interims
         refs = parse_scripture(text)
         if refs:
             self._process_refs(refs)
@@ -2802,7 +2586,6 @@ class HeadlessApp:
         self._electron_loop = None        # asyncio loop for the control server
         self._listening     = False
         self._deepgram      = None
-        self._whisper       = None
         self._ws_server     = None        # browser transcript WS server
         self._http_port     = None
         self._browser_opened = False   # only open browser once per session
@@ -2822,16 +2605,6 @@ class HeadlessApp:
 
         # Start fetch worker thread
         threading.Thread(target=self._fetch_worker, daemon=True).start()
-
-        # Init Whisper if available
-        if WHISPER_AVAILABLE and AUDIO_AVAILABLE:
-            model_name = self.settings.get("whisper_model", "base")
-            device_id  = int(self.settings.get("audio_device", -1))
-            try:
-                self._whisper = WhisperListener(model_name, self._on_transcript, device_id)
-                self._whisper._compute = self.settings.get("compute_device", "cpu")
-            except Exception as e:
-                print(f"[headless] Whisper init failed: {e}")
 
         # Start the browser transcript WS server (for Google Speech browser page)
         self._start_browser_ws()
@@ -3007,6 +2780,8 @@ class HeadlessApp:
     # ── TRANSCRIPTION MODES ─────────────────────────────────────
     def _start_selected_mode(self):
         mode = self.settings.get("mode", "google")
+        if mode not in ("google", "deepgram"):
+            mode = "google"
         self._stop_all_listeners()
 
         if mode == "google":
@@ -3046,37 +2821,10 @@ class HeadlessApp:
                 self.broadcast({"type": "open_browser_url", "url": url})
                 self._browser_opened = True
 
-        elif mode == "whisper":
-            self._logd("--- Whisper mode ---")
-            if self._whisper is None:
-                self._logd("ERROR: faster-whisper not installed")
-                self._logd("Run: pip install faster-whisper sounddevice")
-                self._listening = False
-                self.broadcast({"type": "listening_state", "active": False})
-                return
-            if not self._whisper.model:
-                self._logd("Whisper model loading — will auto-start when ready...")
-                threading.Timer(2.0, self._retry_whisper_start).start()
-                return
-            self._whisper.start()
-            self._logd("Whisper listening on mic...")
-
-    def _retry_whisper_start(self):
-        if not self._listening or self.settings.get("mode") != "whisper":
-            return
-        if self._whisper is None or not self._whisper.model:
-            self._logd("Still loading — retrying in 2s...")
-            threading.Timer(2.0, self._retry_whisper_start).start()
-            return
-        self._whisper.start()
-        self._logd("Whisper listening on mic...")
-
     def _stop_all_listeners(self):
         if self._deepgram:
             self._deepgram.stop()
             self._deepgram = None
-        if self._whisper and self._whisper.listening:
-            self._whisper.stop()
         # Tell the browser listener page to stop mic and close
         if hasattr(self, '_browser_ws') and self._browser_ws:
             self._browser_ws.autostart = False
