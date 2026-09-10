@@ -106,7 +106,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg-${{ matrix.arch }}
-          path: biblecue-desktop/dist/BibleCue*.dmg
+          path: biblecue-desktop/dist/BibleCue-*-${{ matrix.arch }}.dmg
+          if-no-files-found: error
 
   # ── Create GitHub Release with both artifacts ─────────────────────────────
   release:
