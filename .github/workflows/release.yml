@@ -52,8 +52,20 @@ jobs:
           path: biblecue-desktop/dist/BibleCue*.exe
 
   # ── macOS build ───────────────────────────────────────────────────────────
+  # One job per architecture: the bundled PyInstaller backend is native code,
+  # so the Intel DMG must be built on an Intel runner (macos-13) and the
+  # Apple Silicon DMG on an arm64 runner (macos-14). Building both arches on
+  # one runner ships a backend that only runs on that runner's CPU.
   build-mac:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-13
+            arch: x64
+          - runner: macos-14
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,8 +79,13 @@ jobs:
           pip install pyinstaller
           pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
 
-      - name: Build backend (macOS binary)
+      - name: Build backend (${{ matrix.arch }})
         run: pyinstaller backend.spec
+
+      - name: Verify backend architecture
+        run: |
+          file dist/backend
+          lipo -archs dist/backend || true
 
       - name: Copy backend into Electron app
         run: cp dist/backend biblecue-desktop/python/backend && chmod +x biblecue-desktop/python/backend
@@ -81,14 +98,14 @@ jobs:
         working-directory: biblecue-desktop
         run: npm ci
 
-      - name: Build macOS DMG
+      - name: Build macOS DMG (${{ matrix.arch }})
         working-directory: biblecue-desktop
-        run: npm run build:mac
+        run: npm run build:mac:${{ matrix.arch }}
 
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v4
         with:
-          name: mac-dmg
+          name: mac-dmg-${{ matrix.arch }}
           path: biblecue-desktop/dist/BibleCue*.dmg
 
   # ── Create GitHub Release with both artifacts ─────────────────────────────
@@ -98,17 +115,11 @@ jobs:
     permissions:
       contents: write   # required to create the GitHub Release and upload assets
     steps:
-      - name: Download Windows installer
+      - name: Download all installers
         uses: actions/download-artifact@v4
         with:
-          name: windows-installer
           path: artifacts/
-
-      - name: Download macOS DMG
-        uses: actions/download-artifact@v4
-        with:
-          name: mac-dmg
-          path: artifacts/
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -123,8 +134,8 @@ jobs:
             | Platform | Download |
             |----------|---------|
             | **Windows** | `BibleCue.Setup.*.exe` — run the installer, no setup needed |
-            | **macOS (Apple Silicon)** | `BibleCue-*-arm64.dmg` |
-            | **macOS (Intel)** | `BibleCue-*.dmg` |
+            | **macOS (Apple Silicon — M1/M2/M3…)** | `BibleCue-*-arm64.dmg` |
+            | **macOS (Intel)** | `BibleCue-*-x64.dmg` |
 
             No Python or technical setup required — everything is bundled.
 
