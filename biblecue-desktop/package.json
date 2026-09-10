@@ -28,7 +28,7 @@
           ]
         }
       ],
-      "icon": "assets/bLogo.ico",
+      "icon": "assets/icon.png",
       "category": "public.app-category.productivity"
     },
     "extraResources": [
@@ -58,12 +58,7 @@
       "include": "build/installer.nsh"
     },
     "dmg": {
-      "title": "BibleCue ${version}",
-      "background": "assets/bLogo.png",
-      "window": {
-        "width": 540,
-        "height": 380
-      }
+      "title": "BibleCue ${version}"
     }
   },
   "devDependencies": {
