@@ -16,7 +16,7 @@
     "compression": "store",
     "win": {
       "target": "nsis",
-      "icon": "assets/bLogo.ico"
+      "icon": "assets/icon.ico"
     },
     "mac": {
       "target": [
@@ -54,7 +54,7 @@
       "menuCategory": "Church Tools",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "installerHeaderIcon": "assets/bLogo.ico",
+      "installerHeaderIcon": "assets/icon.ico",
       "include": "build/installer.nsh"
     },
     "dmg": {
