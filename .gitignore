@@ -36,7 +36,11 @@ Thumbs.db
 # Claude
 .claude/
 
-# Old versions
+# Old versions / pre-BibleCue legacy
 old/
 standalone/
+electron-app/
 WCIBiblePREVIOUS/
+/WCIBibleshow.py
+/wcilogo.*
+/update_backend.bat

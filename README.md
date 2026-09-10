@@ -43,16 +43,26 @@ npm install
 npm start
 ```
 
-## Building
+## Building the installer
+
+Requires Python 3.11 and PyInstaller (`pip install pyinstaller`).
 
 ```bash
-# Build the SQLite Bible (run once — takes ~30 minutes)
-python scripts/build_bible_db.py
+# 1. Bundle the Python backend into a standalone executable
+pyinstaller backend.spec                                    # -> dist/backend.exe
 
-# Build the Windows installer
+# 2. Copy it into the Electron app
+copy dist\backend.exe biblecue-desktop\python\backend.exe   # Windows
+# cp dist/backend biblecue-desktop/python/backend           # macOS
+
+# 3. Build the platform installer
 cd biblecue-desktop
-npm run build
+npm run build        # Windows NSIS installer -> dist/
+npm run build:mac    # macOS DMG -> dist/
 ```
+
+The local Bible (KJV, WEB) downloads automatically from getbible.net on first
+run and is cached on disk — there is no Bible build step.
 
 ## Adding a New Output Plugin
 

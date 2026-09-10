@@ -63,8 +63,16 @@ def test_near_miss_does_not_crash():
     assert isinstance(results, list)
 
 
-def test_fetch_from_db_returns_none_gracefully():
-    from biblecue import _fetch_from_db
-    # If bible.db doesn't exist in test env, should return (None, None) — not raise
-    text, ref = _fetch_from_db("John", 3, 16, "KJV")
-    assert text is None or isinstance(text, str)
+def test_local_bible_load_missing_file_is_graceful():
+    # No bible_local/*.json in the test env — loading must not raise.
+    from biblecue import _load_local_bible
+    _load_local_bible("KJV")
+
+
+def test_fetch_verse_served_from_cache_without_network():
+    from biblecue import fetch_verse, _VERSE_CACHE
+    _VERSE_CACHE[("john", 3, 16, "KJV")] = (
+        "For God so loved the world", "John 3:16")
+    text, ref = fetch_verse("John", 3, 16, "KJV")
+    assert text == "For God so loved the world"
+    assert ref == "John 3:16"
