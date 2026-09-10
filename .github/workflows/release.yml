@@ -122,10 +122,17 @@ jobs:
             ### Install
             | Platform | Download |
             |----------|---------|
-            | **Windows** | `BibleCue Setup *.exe` — run the installer, no setup needed |
-            | **macOS** | `BibleCue-*.dmg` — open and drag to Applications |
+            | **Windows** | `BibleCue.Setup.*.exe` — run the installer, no setup needed |
+            | **macOS (Apple Silicon)** | `BibleCue-*-arm64.dmg` |
+            | **macOS (Intel)** | `BibleCue-*.dmg` |
 
             No Python or technical setup required — everything is bundled.
+
+            **macOS first launch:** the app isn't signed with an Apple Developer ID.
+            Right-click **BibleCue** in Applications → **Open** → **Open**. If macOS
+            still refuses, run once in Terminal:
+            `xattr -dr com.apple.quarantine /Applications/BibleCue.app`
+            For Google Speech mode, set Chrome or Edge as your default browser.
 
             ### Features
             - Automatic scripture detection from spoken speech

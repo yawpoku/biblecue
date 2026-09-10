@@ -1,6 +1,6 @@
 {
   "name": "biblecue",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Real-time Bible verse display for church services",
   "author": "BibleCue Contributors",
   "main": "main.js",
@@ -14,6 +14,7 @@
     "appId": "com.biblecue.app",
     "productName": "BibleCue",
     "compression": "store",
+    "afterPack": "build/afterPack.js",
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"

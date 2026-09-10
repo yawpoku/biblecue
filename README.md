@@ -16,6 +16,20 @@ Download the latest installer from [Releases](../../releases).
 
 No Python installation required — everything is bundled.
 
+### macOS first launch
+
+The app is not signed with an Apple Developer ID, so macOS will say it
+"could not verify BibleCue is free of malware". To open it the first time:
+
+1. In **Finder → Applications**, right-click **BibleCue** → **Open** → **Open**.
+2. If macOS still refuses, run this once in **Terminal**:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/BibleCue.app
+   ```
+
+For **Google Speech** mode, set **Chrome or Edge** as your default browser —
+Safari's speech recognition won't drive it.
+
 ## Supported Output Software
 
 | Software | Output plugin |
