@@ -6,7 +6,6 @@ Real-time Bible scripture display for church services. Listens to a preacher's m
 
 - Detects spoken Bible references automatically during sermons
 - Supports accented speech (West African, Caribbean, South Asian English)
-- Offline verse lookup — no internet required for KJV, WEB, ASV, BBE, YLT, DARBY
 - Multiple output targets: ProPresenter, OBS Studio, Clipboard, HTTP Webhook, Text File, TCP
 - Two transcription engines: Google Speech (free, browser) and Deepgram (real-time, 200 hrs/month free)
 
