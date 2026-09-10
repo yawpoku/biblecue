@@ -95,6 +95,8 @@ jobs:
   release:
     needs: [build-windows, build-mac]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to create the GitHub Release and upload assets
     steps:
       - name: Download Windows installer
         uses: actions/download-artifact@v4
