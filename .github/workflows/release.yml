@@ -53,17 +53,17 @@ jobs:
 
   # ── macOS build ───────────────────────────────────────────────────────────
   # One job per architecture: the bundled PyInstaller backend is native code,
-  # so the Intel DMG must be built on an Intel runner (macos-13) and the
-  # Apple Silicon DMG on an arm64 runner (macos-14). Building both arches on
+  # so the Intel DMG must be built on an Intel runner (macos-15-intel) and the
+  # Apple Silicon DMG on an arm64 runner (macos-15). Building both arches on
   # one runner ships a backend that only runs on that runner's CPU.
   build-mac:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-13
+          - runner: macos-15-intel
             arch: x64
-          - runner: macos-14
+          - runner: macos-15
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
