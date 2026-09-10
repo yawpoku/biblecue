@@ -140,8 +140,10 @@ jobs:
             No Python or technical setup required — everything is bundled.
 
             **macOS first launch:** the app isn't signed with an Apple Developer ID.
-            Right-click **BibleCue** in Applications → **Open** → **Open**. If macOS
-            still refuses, run once in Terminal:
+            Drag it to Applications, try to open it once, then **System Settings →
+            Privacy & Security → Open Anyway** (older macOS: right-click → Open).
+            The app clears the quarantine flag from its backend itself; if it still
+            won't connect, run once in Terminal:
             `xattr -dr com.apple.quarantine /Applications/BibleCue.app`
             For Google Speech mode, set Chrome or Edge as your default browser.
 

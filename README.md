@@ -17,11 +17,15 @@ No Python installation required — everything is bundled.
 
 ### macOS first launch
 
-The app is not signed with an Apple Developer ID, so macOS will say it
-"could not verify BibleCue is free of malware". To open it the first time:
+BibleCue is not signed with an Apple Developer ID, so the first time you
+open it macOS will say it "could not verify BibleCue is free of malware":
 
-1. In **Finder → Applications**, right-click **BibleCue** → **Open** → **Open**.
-2. If macOS still refuses, run this once in **Terminal**:
+1. Drag **BibleCue** to **Applications**.
+2. Try to open it once (it will be blocked), then go to
+   **System Settings → Privacy & Security**, scroll down, and click
+   **Open Anyway**. On older macOS: right-click **BibleCue** → **Open** → **Open**.
+3. That's it — the app clears the quarantine flag from its bundled
+   backend on its own. If it still won't connect, run once in **Terminal**:
    ```bash
    xattr -dr com.apple.quarantine /Applications/BibleCue.app
    ```

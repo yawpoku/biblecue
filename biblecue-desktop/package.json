@@ -1,6 +1,6 @@
 {
   "name": "biblecue",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Real-time Bible verse display for church services",
   "author": "BibleCue Contributors",
   "main": "main.js",

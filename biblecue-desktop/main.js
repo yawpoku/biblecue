@@ -58,6 +58,27 @@ function getPythonScriptPath () {
   return path.join(__dirname, 'backend.py')
 }
 
+// macOS quarantines every file in a downloaded .app. Approving the app itself
+// (right-click → Open / "Open Anyway") does not clear the flag on the bundled
+// backend binary, which macOS then kills on spawn. Since BibleCue isn't
+// notarized, strip the quarantine attribute from our own backend before
+// launching it. No-op on other platforms and in dev.
+function clearBackendQuarantine (scriptPath) {
+  if (process.platform !== 'darwin' || !app.isPackaged) return
+  try {
+    const { execFileSync } = require('child_process')
+    const pythonDir = path.dirname(scriptPath) // …/Contents/Resources/python
+    execFileSync('/usr/bin/xattr', ['-dr', 'com.apple.quarantine', pythonDir], {
+      timeout: 5000,
+      stdio: 'ignore'
+    })
+    console.log('[python] cleared com.apple.quarantine on', pythonDir)
+  } catch (err) {
+    // xattr exits non-zero when the attribute isn't present — harmless.
+    console.log('[python] quarantine clear skipped:', err.message)
+  }
+}
+
 function spawnPython () {
   const scriptPath = getPythonScriptPath()
 
@@ -71,6 +92,7 @@ function spawnPython () {
 
   // If it's a bundled standalone binary, spawn it directly — no Python needed
   if (scriptPath.endsWith('.exe') || (!scriptPath.endsWith('.py') && !scriptPath.endsWith('.pyc'))) {
+    clearBackendQuarantine(scriptPath)
     console.log(`[python] Spawning bundled binary: ${scriptPath}`)
     const proc = spawn(scriptPath, ['--headless'], {
       stdio: ['ignore', 'pipe', 'pipe'],
