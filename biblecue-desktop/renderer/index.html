@@ -361,7 +361,10 @@
               <code>{{Reference}}</code> into the other — placeholder tokens ProPresenter fills in
               live when triggered. Name it something you'll recognize, e.g. "BibleCue".</li>
             <li><b>Get its UUID.</b> With the API on, open in a browser:
-              <div class="help-code">http://&lt;propresenter-ip&gt;:&lt;port&gt;/v1/message</div>
+              <div class="help-code">
+                <span data-copy-text="http://&lt;propresenter-ip&gt;:&lt;port&gt;/v1/messages">http://&lt;propresenter-ip&gt;:&lt;port&gt;/v1/messages</span>
+                <button class="help-copy-btn" title="Copy">⎘</button>
+              </div>
               This lists every message as JSON. Find yours by <code>"name"</code> and copy the value
               under <code>"id": { "uuid": "..." }</code>.</li>
             <li>Paste the <b>IP</b>, <b>Port</b>, and <b>Message UUID</b> into BibleCue's

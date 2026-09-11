@@ -754,11 +754,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // SECTION 15: Advanced Settings Collapsible
   // ===========================================================================
 
+  // Collapsible bodies animate via an inline max-height measured from the
+  // element's real scrollHeight, not a fixed CSS cap. A fixed cap has to be
+  // either too small (clips real content — the Outputs card has 6 rows,
+  // each with its own expandable fields) or way oversized "to be safe",
+  // and an oversized max-height transitioning inside a scrollable ancestor
+  // (#sidebar) causes the browser's scroll-anchoring to jump the scroll
+  // position unpredictably — e.g. the Transcription Mode card at the top
+  // scrolling out of reach. Measuring the exact height sidesteps both.
+  function openCollapsible (body, arrow) {
+    body.classList.add('open');
+    if (arrow) arrow.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+  function closeCollapsible (body, arrow) {
+    // Pin the current rendered height first so there's a real starting
+    // point for the transition, then collapse on the next frame.
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      body.classList.remove('open');
+      if (arrow) arrow.classList.remove('open');
+      body.style.maxHeight = '0px';
+    });
+  }
+  // Re-measure an already-open body after its own content changes height
+  // (e.g. expanding a nested output's config fields) so newly revealed
+  // content isn't clipped by the old max-height value.
+  function refreshCollapsible (body) {
+    if (body && body.classList.contains('open')) {
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
+  }
+
   if (dom.advToggle && dom.advBody) {
     dom.advToggle.addEventListener('click', () => {
       advBodyOpen = !advBodyOpen;
-      dom.advBody.classList.toggle('open', advBodyOpen);
-      if (dom.advArrow) dom.advArrow.classList.toggle('open', advBodyOpen);
+      if (advBodyOpen) openCollapsible(dom.advBody, dom.advArrow);
+      else closeCollapsible(dom.advBody, dom.advArrow);
     });
   }
 
@@ -766,8 +798,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (dom.outToggle && dom.outBody) {
     dom.outToggle.addEventListener('click', () => {
       outBodyOpen = !outBodyOpen;
-      dom.outBody.classList.toggle('open', outBodyOpen);
-      if (dom.outArrow) dom.outArrow.classList.toggle('open', outBodyOpen);
+      if (outBodyOpen) openCollapsible(dom.outBody, dom.outArrow);
+      else closeCollapsible(dom.outBody, dom.outArrow);
     });
   }
 
@@ -779,6 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cfg) {
         cfg.classList.toggle('open');
         btn.classList.toggle('open');
+        refreshCollapsible(dom.outBody);
       }
     });
   });
@@ -907,6 +940,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dom.helpOverlay && !dom.helpOverlay.hidden) closeHelp();
+  });
+
+  // Copy-to-clipboard buttons on code snippets in the help guide
+  document.querySelectorAll('.help-copy-btn').forEach(btn => {
+    const textEl = btn.previousElementSibling; // the [data-copy-text] span
+    if (!textEl) return;
+    btn.addEventListener('click', () => {
+      const text = textEl.dataset.copyText || textEl.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        btn.textContent = '✓';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.textContent = '⎘';
+        }, 1400);
+      }).catch(() => showToast('Could not copy — select the text manually', 'error'));
+    });
   });
 
   // ── Theme toggle (dark ↔ light) ──────────────────────────────────────────

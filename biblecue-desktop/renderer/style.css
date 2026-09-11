@@ -276,6 +276,9 @@ body.is-mac #btn-close {
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  overflow-anchor: none; /* don't let the browser auto-adjust scroll
+    position to compensate for the collapsible cards' own height changes —
+    that's what was scrolling the Transcription Mode card out of reach */
   padding: 10px 10px 16px;
   gap: 0;
   flex-shrink: 0;
@@ -668,15 +671,14 @@ input[type="number"].inp::-webkit-inner-spin-button {
   margin-top: 0;
 }
 
-/* Cap high enough that no card's real content is ever clipped, so the
-   sidebar's own scroll (#sidebar { overflow-y: auto }) is the only scroll
-   region — no nested scrollbar for a user to discover. A fixed value is
-   required for the CSS transition to animate at all; content shorter than
-   the cap (every card, in practice) reaches full height almost immediately
-   rather than animating for the full 0.28s, which reads as snappy, not
-   broken. */
+/* max-height itself is set inline by app.js, measured from the element's
+   real scrollHeight — not a fixed value here. A flat cap either clips real
+   content (too small) or, oversized, makes the ancestor #sidebar's
+   scrollable area balloon during the transition, which browsers'
+   scroll-anchoring reacts to by jumping the scroll position (e.g. the
+   Transcription Mode card at the top becoming unreachable). Measuring the
+   exact height avoids both. */
 .collapsible-body.open {
-  max-height: 2000px;
   opacity: 1;
   margin-top: 14px;
 }
@@ -2340,6 +2342,9 @@ body[data-theme="light"] #sidebar::-webkit-scrollbar-track {
   color: var(--fg-2);
   font-size: 12.5px;
   line-height: 1.6;
+  user-select: text; /* the app's global user-select:none shouldn't apply
+    to documentation the user needs to select/copy */
+  cursor: text;
 }
 
 .help-intro {
@@ -2417,6 +2422,9 @@ body[data-theme="light"] #sidebar::-webkit-scrollbar-track {
 }
 
 .help-code {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: 'JetBrains Mono', 'Consolas', monospace;
   font-size: 11.5px;
   color: var(--gold);
@@ -2425,7 +2433,39 @@ body[data-theme="light"] #sidebar::-webkit-scrollbar-track {
   border-radius: 5px;
   padding: 8px 10px;
   margin: 6px 0;
+}
+
+.help-code span {
+  flex: 1;
   word-break: break-all;
+}
+
+.help-copy-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-copy-btn:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.help-copy-btn.copied {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
 }
 
 .help-note {

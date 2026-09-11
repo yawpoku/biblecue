@@ -68,7 +68,7 @@ own interface, so you pull it from the API itself:
 3. **Get its UUID.** With the API running, open this in a browser (swap in
    your ProPresenter machine's IP/port):
    ```
-   http://<propresenter-ip>:<port>/v1/message
+   http://<propresenter-ip>:<port>/v1/messages
    ```
    This returns every message as JSON. Find the one you just made by its
    `"name"` and copy the value under `"id": { "uuid": "..." }`.
