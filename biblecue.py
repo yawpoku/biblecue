@@ -2971,6 +2971,10 @@ class HeadlessApp:
 
     # ── PROPRESENTER ─────────────────────────────────────────
     def _send_to_pro(self, verse_text: str, reference: str, trans: str) -> bool:
+        pro_cfg = next((o for o in self.settings.get("outputs", [])
+                         if o.get("type") == "propresenter"), None)
+        if not pro_cfg or not pro_cfg.get("enabled"):
+            return False  # ProPresenter output turned off — don't fire, don't log
         uuid = self.settings.get("message_uuid", "").strip()
         ip   = self.settings.get("pro_ip", "").strip()
         port = str(self.settings.get("pro_port", "1025")).strip()
