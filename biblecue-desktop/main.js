@@ -1,6 +1,6 @@
 'use strict'
 
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
@@ -240,6 +240,32 @@ function killPython () {
 // ---------------------------------------------------------------------------
 // Create main window
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Right-click context menu (Electron shows none by default)
+// ---------------------------------------------------------------------------
+// Covers the log panels, the verse display, and text inputs (manual verse,
+// Deepgram key, output fields) — anywhere a user might select or type text.
+function attachContextMenu (webContents) {
+  webContents.on('context-menu', (_event, params) => {
+    const items = []
+
+    if (params.isEditable) {
+      items.push(
+        { label: 'Cut', role: 'cut', enabled: params.editFlags.canCut },
+        { label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy },
+        { label: 'Paste', role: 'paste', enabled: params.editFlags.canPaste },
+        { type: 'separator' },
+        { label: 'Select All', role: 'selectAll', enabled: params.editFlags.canSelectAll }
+      )
+    } else if (params.selectionText) {
+      items.push({ label: 'Copy', role: 'copy' })
+    }
+
+    if (!items.length) return
+    Menu.buildFromTemplate(items).popup({ window: BrowserWindow.fromWebContents(webContents) })
+  })
+}
+
 function createWindow () {
   const state = loadWindowState()
 
@@ -271,6 +297,7 @@ function createWindow () {
 
   // Load the renderer
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
+  attachContextMenu(mainWindow.webContents)
 
   // Show window gracefully once content is ready
   mainWindow.once('ready-to-show', () => {
@@ -397,6 +424,7 @@ ipcMain.handle('open-fullscreen', () => {
     }
   })
   fullscreenWindow.loadFile(path.join(__dirname, 'renderer', 'fullscreen.html'))
+  attachContextMenu(fullscreenWindow.webContents)
   fullscreenWindow.setMenuBarVisibility(false)
   fullscreenWindow.on('closed', () => { fullscreenWindow = null })
 })
