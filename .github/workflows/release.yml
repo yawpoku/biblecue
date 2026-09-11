@@ -102,6 +102,25 @@ jobs:
         working-directory: biblecue-desktop
         run: npm run build:mac:${{ matrix.arch }}
 
+      - name: Verify DMG backend architecture
+        # Guards against a repeat of the bug where the release merge shipped
+        # an x64 app with an arm64 backend ("bad CPU type in executable").
+        # Mounts the just-built DMG and fails the job if the bundled backend
+        # doesn't match this job's target arch.
+        run: |
+          set -euo pipefail
+          DMG=$(ls biblecue-desktop/dist/BibleCue-*-${{ matrix.arch }}.dmg)
+          MOUNT_POINT=$(hdiutil attach "$DMG" -nobrowse -readonly | grep -Eo '/Volumes/.*' | tail -1)
+          BACKEND="$MOUNT_POINT/BibleCue.app/Contents/Resources/python/backend"
+          FOUND_ARCH=$(lipo -archs "$BACKEND")
+          hdiutil detach "$MOUNT_POINT" -quiet
+          echo "DMG=$DMG  backend arch=$FOUND_ARCH  expected=${{ matrix.arch == 'x64' && 'x86_64' || 'arm64' }}"
+          EXPECTED="${{ matrix.arch == 'x64' && 'x86_64' || 'arm64' }}"
+          if [ "$FOUND_ARCH" != "$EXPECTED" ]; then
+            echo "::error::$DMG bundles a $FOUND_ARCH backend, expected $EXPECTED"
+            exit 1
+          fi
+
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v4
         with:
