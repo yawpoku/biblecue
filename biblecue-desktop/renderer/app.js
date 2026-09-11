@@ -86,6 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClose:         document.getElementById('btn-close'),
     btnTheme:         document.getElementById('btn-theme'),
 
+    // Help / setup guide
+    btnHelp:          document.getElementById('btn-help'),
+    btnHelpClose:     document.getElementById('btn-help-close'),
+    helpOverlay:      document.getElementById('help-overlay'),
+
     // Clear log buttons
     clearLogBtns:     document.querySelectorAll('.btn-clear-log'),
   };
@@ -880,6 +885,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (dom.btnClose) {
     dom.btnClose.addEventListener('click', () => window.electronAPI?.close());
   }
+
+  // ── Help / setup guide modal ─────────────────────────────────────────────
+  function openHelp () {
+    if (dom.helpOverlay) dom.helpOverlay.hidden = false;
+  }
+  function closeHelp () {
+    if (dom.helpOverlay) dom.helpOverlay.hidden = true;
+  }
+  if (dom.btnHelp) {
+    dom.btnHelp.addEventListener('click', openHelp);
+  }
+  if (dom.btnHelpClose) {
+    dom.btnHelpClose.addEventListener('click', closeHelp);
+  }
+  if (dom.helpOverlay) {
+    // Click on the dimmed backdrop (not the modal itself) closes it
+    dom.helpOverlay.addEventListener('click', (e) => {
+      if (e.target === dom.helpOverlay) closeHelp();
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dom.helpOverlay && !dom.helpOverlay.hidden) closeHelp();
+  });
 
   // ── Theme toggle (dark ↔ light) ──────────────────────────────────────────
   function applyTheme (theme) {

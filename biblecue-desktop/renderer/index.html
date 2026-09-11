@@ -21,6 +21,7 @@
       <span class="app-name">BibleCue</span>
     </div>
     <div class="titlebar-controls">
+      <button id="btn-help" title="Setup guide">?</button>
       <button id="btn-theme" title="Toggle light/dark mode">☀</button>
       <button id="btn-minimize">—</button>
       <button id="btn-maximize">⤢</button>
@@ -332,6 +333,89 @@
   </div>
 
   <div id="toast-container" class="toast-container"></div>
+
+  <!-- HELP / SETUP GUIDE MODAL -->
+  <div id="help-overlay" class="help-overlay" hidden>
+    <div id="help-modal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="help-header">
+        <span id="help-title" class="help-title">Setup Guide</span>
+        <button id="btn-help-close" class="help-close" title="Close">✕</button>
+      </div>
+      <div class="help-body">
+
+        <p class="help-intro">Turn on <b>exactly one</b> output below — enabling several at once sends
+          every detected verse to all of them.</p>
+
+        <section class="help-section">
+          <h3>ProPresenter <span class="help-tag">the tricky one</span></h3>
+          <p>BibleCue triggers a <b>Message</b> in ProPresenter — it doesn't show a message's UUID
+            anywhere in its own interface, so you pull it from the API.</p>
+          <ol>
+            <li><b>Turn on the Network API.</b> ProPresenter → <b>Preferences → Network</b>, enable
+              it, and note the <b>port</b> (default <code>1025</code>). Find the ProPresenter
+              machine's local IP (System Settings → Network on Mac, <code>ipconfig</code> on
+              Windows) — that's BibleCue's IP field.</li>
+            <li><b>Create the Message.</b> Open ProPresenter's <b>Messages</b> panel (flag icon in
+              the toolbar, or View → Messages), add a message, and build a layout with two text
+              layers. Type the literal text <code>{{VerseText}}</code> into one and
+              <code>{{Reference}}</code> into the other — placeholder tokens ProPresenter fills in
+              live when triggered. Name it something you'll recognize, e.g. "BibleCue".</li>
+            <li><b>Get its UUID.</b> With the API on, open in a browser:
+              <div class="help-code">http://&lt;propresenter-ip&gt;:&lt;port&gt;/v1/message</div>
+              This lists every message as JSON. Find yours by <code>"name"</code> and copy the value
+              under <code>"id": { "uuid": "..." }</code>.</li>
+            <li>Paste the <b>IP</b>, <b>Port</b>, and <b>Message UUID</b> into BibleCue's
+              ProPresenter output and enable it. Test with Advanced Settings → Send Verse Manually.</li>
+          </ol>
+          <p class="help-note">Both machines must be on the same network. If ProPresenter returns
+            an <code>HTTP 404</code> on trigger, the message was likely deleted/recreated since —
+            recreating always issues a <b>new</b> UUID, even with the same name. Redo step 3.</p>
+        </section>
+
+        <section class="help-section">
+          <h3>OBS Studio</h3>
+          <p>Requires a text source already added to your OBS scene (its exact name goes in
+            BibleCue's <b>Text Source</b> field).</p>
+          <ol>
+            <li>In OBS: <b>Tools → WebSocket Server Settings</b>, enable the server, note the
+              <b>port</b> (default <code>4455</code>) and click "Show Connect Info" for the
+              <b>password</b>.</li>
+            <li>In BibleCue's OBS Studio output: IP <code>127.0.0.1</code> if BibleCue and OBS run
+              on the same machine (otherwise OBS's local IP), the port, the password, and the exact
+              text source name.</li>
+          </ol>
+        </section>
+
+        <section class="help-section">
+          <h3>HTTP Webhook</h3>
+          <p>Enter any URL that accepts a <code>POST</code> with JSON body
+            <code>{"verse","reference","translation"}</code> — a EasyWorship/Proclaim integration, a
+            Zapier/Make webhook, or your own script.</p>
+        </section>
+
+        <section class="help-section">
+          <h3>Text File</h3>
+          <p>Enter a file path (e.g. <code>C:\verse.txt</code> or <code>/Users/you/verse.txt</code>).
+            BibleCue overwrites it with the verse text and reference on every detection — point a
+            lower-third tool, OBS's "Read from file" text source, vMix, etc. at that path.</p>
+        </section>
+
+        <section class="help-section">
+          <h3>TCP Raw</h3>
+          <p>Enter the IP and port of a device listening on a plain TCP socket (legacy broadcast
+            character generators, custom scripts). BibleCue sends
+            <code>"&lt;verse text&gt; — &lt;reference&gt;\n"</code> as UTF-8 — no protocol beyond that.</p>
+        </section>
+
+        <section class="help-section">
+          <h3>Clipboard</h3>
+          <p>No setup — copies <code>"&lt;verse text&gt; — &lt;reference&gt;"</code> to the system
+            clipboard on every detection. Paste it into anything.</p>
+        </section>
+
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

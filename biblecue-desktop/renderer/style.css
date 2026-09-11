@@ -658,11 +658,17 @@ input[type="number"].inp::-webkit-inner-spin-button {
   margin-top: 0;
 }
 
+/* Cap high enough that no card's real content is ever clipped, so the
+   sidebar's own scroll (#sidebar { overflow-y: auto }) is the only scroll
+   region — no nested scrollbar for a user to discover. A fixed value is
+   required for the CSS transition to animate at all; content shorter than
+   the cap (every card, in practice) reaches full height almost immediately
+   rather than animating for the full 0.28s, which reads as snappy, not
+   broken. */
 .collapsible-body.open {
-  max-height: 340px;
+  max-height: 2000px;
   opacity: 1;
   margin-top: 14px;
-  overflow-y: auto;
 }
 
 /* ============================================================
@@ -2222,6 +2228,217 @@ body[data-theme="light"] #sidebar::-webkit-scrollbar-track {
 #btn-theme:hover {
   background: rgba(245, 158, 11, 0.12);
   color: var(--gold);
+}
+
+/* ── Help button (titlebar) ──────────────────────────────────── */
+#btn-help {
+  -webkit-app-region: no-drag;
+  width: 30px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin-right: 2px;
+}
+
+#btn-help:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--blue);
+}
+
+/* ============================================================
+   SECTION 36: HELP / SETUP GUIDE MODAL
+   ============================================================ */
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(2, 5, 12, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  -webkit-app-region: no-drag;
+}
+
+.help-overlay[hidden] {
+  display: none;
+}
+
+.help-modal {
+  width: min(680px, 100%);
+  max-height: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.18s ease;
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+.help-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.help-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.help-close:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+.help-body {
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  color: var(--fg-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.help-intro {
+  margin-bottom: 18px;
+  color: var(--fg-2);
+}
+
+.help-intro b {
+  color: var(--fg);
+}
+
+.help-section {
+  padding: 16px 0;
+  border-top: 1px solid var(--divider);
+}
+
+.help-section:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.help-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.help-tag {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--fg-3);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.help-section p {
+  margin: 0 0 8px;
+}
+
+.help-section b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.help-section ol {
+  margin: 8px 0 8px 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.help-section li::marker {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.help-section code {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.help-code {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 11.5px;
+  color: var(--gold);
+  background: var(--bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  word-break: break-all;
+}
+
+.help-note {
+  margin-top: 10px;
+  padding: 9px 11px;
+  background: rgba(245, 158, 11, 0.07);
+  border-left: 2px solid var(--gold);
+  border-radius: 0 5px 5px 0;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+
+body[data-theme="light"] .help-overlay {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+body[data-theme="light"] .help-tag {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body[data-theme="light"] .help-code,
+body[data-theme="light"] .help-section code {
+  background: rgba(59, 130, 246, 0.08);
 }
 
 /* ============================================================
