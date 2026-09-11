@@ -123,7 +123,7 @@ Requirements: Node.js 18+, Python 3.10+
 
 ```bash
 # Install Python dependencies
-pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
+pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py
 
 # Install Node dependencies
 cd biblecue-desktop

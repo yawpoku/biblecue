@@ -94,7 +94,7 @@ def _output_text_file(cfg: dict, verse_text: str, reference: str) -> None:
 def _output_obs(cfg: dict, verse_text: str, reference: str) -> None:
     try:
         import obswebsocket
-        import obswebsocket.requests as obsreq
+        from obswebsocket import requests as obsreq
     except ImportError:
         return  # obs-websocket-py not installed — silently skip
     ip       = cfg.get("ip",       "127.0.0.1")

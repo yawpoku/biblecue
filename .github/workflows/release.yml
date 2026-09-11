@@ -20,7 +20,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
+          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py
 
       - name: Build backend.exe
         run: pyinstaller backend.spec
@@ -77,7 +77,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow
+          pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py
 
       - name: Build backend (${{ matrix.arch }})
         run: pyinstaller backend.spec
