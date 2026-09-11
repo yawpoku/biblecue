@@ -7,6 +7,13 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // macOS keeps its native traffic-light window controls even in a frameless
+  // window. Flag it on <body> so style.css can inset the titlebar content
+  // past them and hide the custom min/max/close buttons (redundant on Mac).
+  if (window.electronAPI && window.electronAPI.platform === 'darwin') {
+    document.body.classList.add('is-mac');
+  }
+
   // ===========================================================================
   // SECTION 1: DOM References
   // ===========================================================================

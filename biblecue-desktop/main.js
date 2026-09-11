@@ -252,6 +252,12 @@ function createWindow () {
     minHeight: 700,
     frame: false,
     titleBarStyle: 'hidden',
+    // macOS keeps its native red/yellow/green controls even with frame:false;
+    // position them to sit centered in the 32px custom titlebar instead of
+    // Electron's default (which overlaps the logo). The renderer insets the
+    // titlebar content and hides the custom min/max/close on darwin — see
+    // body.is-mac in style.css.
+    ...(process.platform === 'darwin' ? { trafficLightPosition: { x: 14, y: 10 } } : {}),
     backgroundColor: '#060B18',
     icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     show: false,

@@ -203,6 +203,21 @@ body {
   box-shadow: 0 0 12px var(--red-glow);
 }
 
+/* ── macOS: native traffic lights replace the custom controls ───
+   Electron still draws the red/yellow/green window controls on macOS
+   even with frame:false. Inset the logo/name past them (positioned via
+   trafficLightPosition in main.js) and drop the custom min/max/close —
+   only the theme toggle stays, since it's not a native control. ── */
+body.is-mac .titlebar-left {
+  margin-left: 64px;
+}
+
+body.is-mac #btn-minimize,
+body.is-mac #btn-maximize,
+body.is-mac #btn-close {
+  display: none;
+}
+
 /* ============================================================
    SECTION 4: GOLD ACCENT LINE
    ============================================================ */
