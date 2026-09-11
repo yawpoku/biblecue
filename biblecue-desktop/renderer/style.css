@@ -620,6 +620,16 @@ input[type="number"].inp::-webkit-inner-spin-button {
    ============================================================ */
 
 /* ── Collapsible Card Reset ──────────────────────────────────── */
+/* .card sets overflow:hidden (to keep decorative backgrounds inside its
+   rounded corners) — fine for static cards, but it also clips a
+   collapsible card's own expanded content, independent of the
+   .collapsible-body max-height fix above. Free collapsible cards from
+   that clip so open content is never cut off; #sidebar's own scroll
+   remains the only scroll region. */
+.card-collapsible {
+  overflow: visible;
+}
+
 .card-collapsible .card-header {
   margin-bottom: 0;
 }
