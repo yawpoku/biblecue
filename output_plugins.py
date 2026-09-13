@@ -22,6 +22,8 @@ def fire_outputs(settings: dict, verse_text: str, reference: str, translation: s
         try:
             if ptype == "propresenter":
                 _output_propresenter(plugin, verse_text, reference, translation)
+            elif ptype == "easyworship":
+                _output_easyworship(plugin, verse_text, reference)
             elif ptype == "clipboard":
                 _output_clipboard(verse_text, reference)
             elif ptype == "http_webhook":
@@ -56,6 +58,19 @@ def _output_propresenter(cfg: dict, verse_text: str, reference: str, translation
     except requests.exceptions.ConnectionError:
         _pro_session = requests.Session()
         raise
+
+
+def _output_easyworship(cfg: dict, verse_text: str, reference: str) -> None:
+    """EasyWorship has no live push API, so this writes the verse to a file
+    EasyWorship's Announcements module (or a similar live-text feature) can
+    be pointed at and set to auto-refresh. Same mechanism as the generic
+    Text File output, kept separate so it gets its own toggle/default path
+    and setup docs."""
+    path = cfg.get("path", "").strip()
+    if not path:
+        return
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"{verse_text}\n{reference}")
 
 
 def _output_clipboard(verse_text: str, reference: str) -> None:

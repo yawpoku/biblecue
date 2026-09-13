@@ -110,13 +110,28 @@
                 <input type="checkbox" id="out-pp-enabled">
                 <span class="checkbox-custom"></span>
               </label>
-              <span class="output-plugin-name">ProPresenter 7</span>
+              <span class="output-plugin-name">ProPresenter</span>
               <button class="output-expand-btn" data-target="out-pp-cfg">▸</button>
             </div>
             <div class="output-plugin-cfg" id="out-pp-cfg">
               <div class="form-row"><label>IP</label><input type="text" id="out-pp-ip" class="inp" placeholder="192.168.1.100"></div>
               <div class="form-row"><label>Port</label><input type="text" id="out-pp-port" class="inp inp-sm" placeholder="1025"></div>
               <div class="form-row"><label>Message UUID</label><input type="text" id="out-pp-uuid" class="inp inp-mono" placeholder="uuid..."></div>
+            </div>
+          </div>
+
+          <!-- EasyWorship -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-ew-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">EasyWorship</span>
+              <button class="output-expand-btn" data-target="out-ew-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-ew-cfg">
+              <div class="form-row"><label>Path</label><input type="text" id="out-ew-path" class="inp" placeholder="C:\BibleCue\easyworship_verse.txt"></div>
             </div>
           </div>
 
@@ -373,6 +388,26 @@
           <p class="help-note">Both machines must be on the same network. If ProPresenter returns
             an <code>HTTP 404</code> on trigger, the message was likely deleted/recreated since —
             recreating always issues a <b>new</b> UUID, even with the same name. Redo step 3.</p>
+        </section>
+
+        <section class="help-section">
+          <h3>EasyWorship</h3>
+          <p>EasyWorship doesn't publish a live "push a slide" API the way ProPresenter does, so this
+            output writes the verse to a plain text file instead — same mechanism as the generic
+            Text File output below, with its own toggle and default path so it's easy to tell apart.</p>
+          <ol>
+            <li><b>Pick a path.</b> Enter any file path in the EasyWorship output's <b>Path</b> field
+              (e.g. <code>C:\BibleCue\easyworship_verse.txt</code>). BibleCue creates/overwrites it on
+              every detection with the verse text on the first line and the reference on the second.</li>
+            <li><b>Point EasyWorship at it.</b> Exact steps vary by EasyWorship version — look for a
+              way to display live/auto-refreshing text from a local file, such as the
+              <b>Announcements</b> module's text/ticker source (<b>Media → Announcements</b> in recent
+              versions) set to read that path and refresh on an interval. If your version has no such
+              feature, a free "watch folder" or hotkey plugin from EasyWorship's marketplace can
+              usually bridge a text file into a Custom Slide.</li>
+            <li><b>No live-text feature at all?</b> Use the <b>Clipboard</b> output instead — it copies
+              each verse the instant it's detected, ready to paste into a Custom Slide by hand.</li>
+          </ol>
         </section>
 
         <section class="help-section">

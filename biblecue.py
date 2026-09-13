@@ -172,6 +172,7 @@ DEFAULT_SETTINGS = {
     "fuzzy_threshold":  0.72,
     "outputs": [
         {"type": "propresenter", "enabled": False, "ip": "", "port": "1025", "uuid": ""},
+        {"type": "easyworship", "enabled": False, "path": ""},
         {"type": "clipboard",    "enabled": False},
         {"type": "http_webhook", "enabled": False, "url": ""},
         {"type": "text_file",    "enabled": False, "path": ""},

@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     outPpIp:            document.getElementById('out-pp-ip'),
     outPpPort:          document.getElementById('out-pp-port'),
     outPpUuid:          document.getElementById('out-pp-uuid'),
+    outEwEnabled:       document.getElementById('out-ew-enabled'),
+    outEwPath:          document.getElementById('out-ew-path'),
     outClipEnabled:     document.getElementById('out-clip-enabled'),
     outWebhookEnabled:  document.getElementById('out-webhook-enabled'),
     outWebhookUrl:      document.getElementById('out-webhook-url'),
@@ -356,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!Array.isArray(outputs)) return;
     const find = (type) => outputs.find(o => o.type === type) || {};
     const pp      = find('propresenter');
+    const ew      = find('easyworship');
     const clip    = find('clipboard');
     const webhook = find('http_webhook');
     const file    = find('text_file');
@@ -365,6 +368,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.outPpIp)           dom.outPpIp.value             = pp.ip    || '';
     if (dom.outPpPort)         dom.outPpPort.value           = pp.port  || '1025';
     if (dom.outPpUuid)         dom.outPpUuid.value           = pp.uuid  || '';
+    if (dom.outEwEnabled)      dom.outEwEnabled.checked      = !!ew.enabled;
+    if (dom.outEwPath)         dom.outEwPath.value           = ew.path || '';
     if (dom.outClipEnabled)    dom.outClipEnabled.checked    = !!clip.enabled;
     if (dom.outWebhookEnabled) dom.outWebhookEnabled.checked = !!webhook.enabled;
     if (dom.outWebhookUrl)     dom.outWebhookUrl.value       = webhook.url || '';
@@ -394,6 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ip: dom.outPpIp ? dom.outPpIp.value.trim() : '',
         port: dom.outPpPort ? dom.outPpPort.value.trim() : '1025',
         uuid: dom.outPpUuid ? dom.outPpUuid.value.trim() : '' },
+      { type: 'easyworship', enabled: dom.outEwEnabled ? dom.outEwEnabled.checked : false,
+        path: dom.outEwPath ? dom.outEwPath.value.trim() : '' },
       { type: 'clipboard', enabled: dom.outClipEnabled ? dom.outClipEnabled.checked : false },
       { type: 'http_webhook', enabled: dom.outWebhookEnabled ? dom.outWebhookEnabled.checked : false,
         url: dom.outWebhookUrl ? dom.outWebhookUrl.value.trim() : '' },
@@ -729,6 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.selDevice,
     dom.chkAutostart,
     dom.outPpIp, dom.outPpPort, dom.outPpUuid,
+    dom.outEwPath,
     dom.outWebhookUrl, dom.outFilePath,
     dom.outObsIp, dom.outObsPort, dom.outObsPassword, dom.outObsSource,
     dom.outTcpIp, dom.outTcpPort,
@@ -745,7 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Output enabled checkboxes — immediate save
-  [dom.outPpEnabled, dom.outClipEnabled, dom.outWebhookEnabled,
+  [dom.outPpEnabled, dom.outEwEnabled, dom.outClipEnabled, dom.outWebhookEnabled,
    dom.outFileEnabled, dom.outObsEnabled, dom.outTcpEnabled]
     .filter(Boolean)
     .forEach(el => el.addEventListener('change', saveSettings));
