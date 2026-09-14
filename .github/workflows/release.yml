@@ -22,6 +22,10 @@ jobs:
           pip install pyinstaller
           pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py
 
+      - name: Install ndi-python (optional — NDI output degrades gracefully if unavailable)
+        run: pip install ndi-python
+        continue-on-error: true
+
       - name: Build backend.exe
         run: pyinstaller backend.spec
 
@@ -78,6 +82,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller
           pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py
+
+      - name: Install ndi-python (optional — no macOS x64 wheel exists yet; NDI
+          output degrades gracefully if unavailable)
+        run: pip install ndi-python
+        continue-on-error: true
 
       - name: Build backend (${{ matrix.arch }})
         run: pyinstaller backend.spec

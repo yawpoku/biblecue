@@ -219,22 +219,6 @@ body.is-mac #btn-close {
 }
 
 /* ============================================================
-   SECTION 4: GOLD ACCENT LINE
-   ============================================================ */
-
-.gold-line {
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    var(--gold) 0%,
-    var(--gold-dim) 40%,
-    rgba(245, 158, 11, 0.15) 75%,
-    transparent 100%
-  );
-  flex-shrink: 0;
-}
-
-/* ============================================================
    SECTION 5: APP LAYOUT (SHELL)
    ============================================================ */
 
@@ -2489,6 +2473,254 @@ body[data-theme="light"] .help-tag {
 body[data-theme="light"] .help-code,
 body[data-theme="light"] .help-section code {
   background: rgba(59, 130, 246, 0.08);
+}
+
+/* ============================================================
+   SECTION 20: LOG PANEL ACTIONS (copy button)
+   ============================================================ */
+
+.log-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.btn-copy-log {
+  background: transparent;
+  border: none;
+  color: var(--fg-2);
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-copy-log svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn-copy-log:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--fg);
+}
+
+/* ============================================================
+   SECTION 21: OUTPUT TAG BADGE (e.g. NDI "Video")
+   ============================================================ */
+
+.output-plugin-name .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  font-weight: 500;
+  color: var(--gold);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 1px 6px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+}
+
+/* ============================================================
+   SECTION 22: DISPLAY SETTINGS CARD
+   ============================================================ */
+
+.radio-group-inline {
+  flex-direction: row;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.radio-option-sm {
+  padding: 6px 12px;
+  gap: 7px;
+}
+.radio-option-sm .radio-custom {
+  width: 12px;
+  height: 12px;
+}
+.radio-option-sm .radio-label {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.inp-color {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.inp-color::-webkit-color-swatch-wrapper { padding: 2px; }
+.inp-color::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+.btn-ghost-sm {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-ghost-sm:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--fg);
+}
+
+.bg-image-preview {
+  margin-top: 8px;
+  width: 100%;
+  height: 60px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background-size: cover;
+  background-position: center;
+}
+
+.align-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.align-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--divider);
+  margin: 0 4px;
+}
+
+.align-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--fg-2);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.align-btn:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--fg);
+}
+.align-btn-active {
+  border-color: var(--gold);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+}
+
+/* ============================================================
+   SECTION 23: APPLICATION MENU BAR (File / Edit / View / Help)
+   ============================================================ */
+
+#menubar {
+  height: 26px;
+  background: var(--header-bg);
+  display: flex;
+  align-items: stretch;
+  padding: 0 6px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+  position: relative;
+  z-index: 99;
+  font-family: 'Space Grotesk', sans-serif;
+  -webkit-app-region: no-drag;
+}
+
+/* The real OS menu bar already covers this on macOS (see main.js) */
+body.is-mac #menubar { display: none; }
+
+.menubar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  cursor: default;
+  outline: none;
+}
+
+.menubar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-2);
+  letter-spacing: 0.01em;
+}
+
+.menubar-item:hover,
+.menubar-item:focus,
+.menubar-item.menu-open {
+  background: rgba(255, 255, 255, 0.06);
+}
+.menubar-item:hover .menubar-label,
+.menubar-item:focus .menubar-label,
+.menubar-item.menu-open .menubar-label {
+  color: var(--fg);
+}
+
+.menubar-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: var(--header-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+  padding: 5px;
+  z-index: 200;
+}
+
+.menubar-item:hover .menubar-dropdown,
+.menubar-item:focus-within .menubar-dropdown,
+.menubar-item.menu-open .menubar-dropdown {
+  display: block;
+}
+
+.menubar-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.menubar-dropdown button:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+}
+
+.menubar-sep {
+  height: 1px;
+  background: var(--divider);
+  margin: 4px 2px;
 }
 
 /* ============================================================

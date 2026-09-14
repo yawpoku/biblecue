@@ -93,11 +93,14 @@ _OUTPUT_PLUGINS_MISSING = False
 _OUTPUT_PLUGINS_ERR = None
 try:
     from output_plugins import fire_outputs as _fire_outputs
+    from output_plugins import sync_ndi_output as _sync_ndi_output
 except Exception as _e:
     _OUTPUT_PLUGINS_MISSING = True
     _OUTPUT_PLUGINS_ERR = f"{type(_e).__name__}: {_e}"
     def _fire_outputs(settings, verse_text, reference, translation):
         return [], []
+    def _sync_ndi_output(settings):
+        pass
 
 
 # ── HEADLESS MODE (Electron spawns with --headless to skip tkinter) ──────────
@@ -178,7 +181,23 @@ DEFAULT_SETTINGS = {
         {"type": "text_file",    "enabled": False, "path": ""},
         {"type": "obs_websocket","enabled": False, "ip": "127.0.0.1", "port": "4455", "password": "", "source": "BibleVerse"},
         {"type": "tcp_raw",      "enabled": False, "ip": "", "port": ""},
+        {"type": "ndi",          "enabled": False, "stream_name": "BibleCue"},
     ],
+    # Look of the live/fullscreen display — applied to both the fullscreen
+    # window and (rendered as a video frame) the NDI output.
+    "display": {
+        "bg_type":       "color",   # "color" | "image"
+        "bg_color":      "#060B18",
+        "bg_image":      "",        # data: URL, chosen via the Display settings file picker
+        "text_color":    "#F8FAFC",
+        "accent_color":  "#F59E0B",
+        "font_family":   "Playfair Display",
+        "font_weight":   "500",
+        "verse_size":    100,   # percent scale, 100 = default clamp() size
+        "ref_size":      100,
+        "align_h":       "center",  # left | center | right
+        "align_v":       "middle",  # top | middle | bottom
+    },
 }
 
 def load_settings():
@@ -200,17 +219,26 @@ def load_settings():
     except Exception:
         return dict(DEFAULT_SETTINGS)
 
+def _dbg(msg):
+    """Appends a line to biblecue_debug.log — pythonw has no visible stdout,
+    so this is the only way to see backend errors during dev/support.
+    Explicit utf-8 (unlike the debug logging this replaced) so writing the
+    message itself can't throw on Windows' non-utf8 default encoding."""
+    try:
+        import pathlib, datetime
+        _d = pathlib.Path(os.path.dirname(os.path.abspath(__file__))) / "biblecue_debug.log"
+        with _d.open("a", encoding="utf-8") as f:
+            f.write(f"{datetime.datetime.now()} {msg}\n")
+    except Exception:
+        pass
+
+
 def save_settings(s):
     try:
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(s, f, indent=2)
-        import pathlib, datetime
-        _d = pathlib.Path(os.path.dirname(os.path.abspath(__file__))) / "biblecue_debug.log"
-        _d.open("a").write(f"{datetime.datetime.now()} save_settings OK → {SETTINGS_FILE}\n")
     except Exception as exc:
-        import pathlib, datetime
-        _d = pathlib.Path(os.path.dirname(os.path.abspath(__file__))) / "biblecue_debug.log"
-        _d.open("a").write(f"{datetime.datetime.now()} save_settings FAILED: {exc}\n")
+        _dbg(f"save_settings FAILED: {exc}")
 
 # ═══════════════════════════════════════════════════════════════
 #  BROWSER LISTENER HTML  (~line 185)
@@ -2611,6 +2639,9 @@ class HeadlessApp:
         self._start_browser_ws()
         self._listener_url = f"http://127.0.0.1:{self._http_port or 8766}"
 
+        # If NDI was left enabled from a previous session, start it now
+        _sync_ndi_output(self.settings)
+
     # ── BROADCAST ──────────────────────────────────────────────
     def broadcast(self, msg: dict):
         """Send a JSON message to all connected Electron clients (thread-safe)."""
@@ -2701,6 +2732,12 @@ class HeadlessApp:
                         self.settings["pro_port"]     = out["port"]
                     break
             save_settings(self.settings)
+            ndi_status = _sync_ndi_output(self.settings)
+            if ndi_status:
+                self._logd(ndi_status, subtype="warn" if "⚠️" in ndi_status else "info")
+            # Broadcast so any other open window (e.g. the fullscreen display)
+            # picks up display/background/font changes immediately, live.
+            self.broadcast({"type": "settings_response", "data": self.settings})
 
         elif t == "get_devices":
             await websocket.send(json.dumps(
@@ -2767,6 +2804,8 @@ class HeadlessApp:
                         data = json.loads(message)
                         await self._handle_msg(data, websocket)
                     except Exception as e:
+                        import traceback
+                        _dbg(f"Message error: {e}\n{traceback.format_exc()}")
                         print(f"[headless] Message error: {e}")
             except Exception as e:
                 print(f"[headless] WS error: {e}")

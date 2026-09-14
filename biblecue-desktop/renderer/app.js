@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Status bar
     statusDot:        document.getElementById('status-dot'),
     statusText:       document.getElementById('status-text'),
-    dgStatus:         document.getElementById('dg-status'),
     dgStatusMain:     document.getElementById('dg-status-main'),
 
     // Listen button
@@ -41,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings fields
     selTranslation:   document.getElementById('sel-translation'),
     inpCooldown:      document.getElementById('inp-cooldown'),
-    inpDgKey:         document.getElementById('inp-dg-key'),
     selDevice:        document.getElementById('sel-device'),
     chkAutostart:     document.getElementById('chk-autostart'),
     saveIndicator:    document.getElementById('save-indicator'),
@@ -69,14 +67,33 @@ document.addEventListener('DOMContentLoaded', () => {
     outTcpEnabled:      document.getElementById('out-tcp-enabled'),
     outTcpIp:           document.getElementById('out-tcp-ip'),
     outTcpPort:         document.getElementById('out-tcp-port'),
+    outNdiEnabled:      document.getElementById('out-ndi-enabled'),
+    outNdiName:         document.getElementById('out-ndi-name'),
+
+    // Display card
+    displayToggle:    document.getElementById('display-toggle'),
+    displayBody:      document.getElementById('display-body'),
+    displayArrow:     document.getElementById('display-arrow'),
+    bgTypeRadios:     document.querySelectorAll('input[name="bg-type"]'),
+    bgColorRow:       document.getElementById('bg-color-row'),
+    bgImageRow:       document.getElementById('bg-image-row'),
+    inpBgColor:       document.getElementById('inp-bg-color'),
+    btnBgImagePick:   document.getElementById('btn-bg-image-pick'),
+    btnBgImageClear:  document.getElementById('btn-bg-image-clear'),
+    inpBgImageFile:   document.getElementById('inp-bg-image-file'),
+    bgImagePreview:   document.getElementById('bg-image-preview'),
+    selFontFamily:    document.getElementById('sel-font-family'),
+    selFontWeight:    document.getElementById('sel-font-weight'),
+    inpVerseSize:     document.getElementById('inp-verse-size'),
+    inpRefSize:       document.getElementById('inp-ref-size'),
+    inpTextColor:     document.getElementById('inp-text-color'),
+    inpAccentColor:   document.getElementById('inp-accent-color'),
+    alignBtns:        document.querySelectorAll('.align-btn'),
 
     // Advanced settings
     advToggle:        document.getElementById('adv-toggle'),
     advBody:          document.getElementById('adv-body'),
     advArrow:         document.getElementById('adv-arrow'),
-
-    // API key visibility
-    btnShowKey:       document.getElementById('btn-show-key'),
 
     // Manual verse
     btnManualSend:    document.getElementById('btn-manual-send'),
@@ -93,8 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnHelpClose:     document.getElementById('btn-help-close'),
     helpOverlay:      document.getElementById('help-overlay'),
 
-    // Clear log buttons
+    // Log panel buttons
     clearLogBtns:     document.querySelectorAll('.btn-clear-log'),
+    copyLogBtns:      document.querySelectorAll('.btn-copy-log'),
   };
 
   // ===========================================================================
@@ -113,6 +131,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // For interim transcript line replacement
   let lastEntryWasInterim = false;
+
+  // Display card — the background image (data: URL) and alignment aren't
+  // plain form fields, so track them here and read/write on populate/collect.
+  let displayState = {
+    bg_image: '',
+    align_h: 'center',
+    align_v: 'middle',
+  };
 
   // ===========================================================================
   // SECTION 3: Utility Helpers
@@ -327,14 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setVal(dom.selTranslation,  data.translation);
     setVal(dom.inpCooldown,     data.cooldown_secs);
-    setVal(dom.inpDgKey,        data.deepgram_key);
     setChk(dom.chkAutostart,    data.autostart);
-
-    // Mode radio buttons
-    if (data.mode) {
-      const modeRadio = document.querySelector(`input[name="mode"][value="${data.mode}"]`);
-      if (modeRadio) modeRadio.checked = true;
-    }
 
     // Auto-start on load if configured
     if (data.autostart && !autoStartPending) {
@@ -348,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (data.outputs) populateOutputs(data.outputs);
+    if (data.display) populateDisplay(data.display);
   }
 
   /**
@@ -364,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const file    = find('text_file');
     const obs     = find('obs_websocket');
     const tcp     = find('tcp_raw');
+    const ndi     = find('ndi');
     if (dom.outPpEnabled)      dom.outPpEnabled.checked      = !!pp.enabled;
     if (dom.outPpIp)           dom.outPpIp.value             = pp.ip    || '';
     if (dom.outPpPort)         dom.outPpPort.value           = pp.port  || '1025';
@@ -383,6 +404,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.outTcpEnabled)     dom.outTcpEnabled.checked     = !!tcp.enabled;
     if (dom.outTcpIp)          dom.outTcpIp.value            = tcp.ip   || '';
     if (dom.outTcpPort)        dom.outTcpPort.value          = tcp.port || '';
+    if (dom.outNdiEnabled)     dom.outNdiEnabled.checked     = !!ndi.enabled;
+    if (dom.outNdiName)        dom.outNdiName.value          = ndi.stream_name || 'BibleCue';
+  }
+
+  /**
+   * Populate the Display card from a display settings object.
+   * @param {object} display
+   */
+  function populateDisplay(display) {
+    if (!display) return;
+    const setVal = (el, val) => { if (el && val !== undefined && val !== null) el.value = val; };
+
+    const bgType = display.bg_type || 'color';
+    const bgTypeRadio = document.querySelector(`input[name="bg-type"][value="${bgType}"]`);
+    if (bgTypeRadio) bgTypeRadio.checked = true;
+    if (dom.bgColorRow) dom.bgColorRow.style.display = bgType === 'color' ? '' : 'none';
+    if (dom.bgImageRow) dom.bgImageRow.style.display = bgType === 'image' ? '' : 'none';
+
+    setVal(dom.inpBgColor, display.bg_color || '#060B18');
+    displayState.bg_image = display.bg_image || '';
+    renderBgImagePreview();
+
+    setVal(dom.selFontFamily, display.font_family || 'Playfair Display');
+    setVal(dom.selFontWeight, display.font_weight || '500');
+    setVal(dom.inpVerseSize, display.verse_size ?? 100);
+    setVal(dom.inpRefSize,   display.ref_size ?? 100);
+    setVal(dom.inpTextColor,   display.text_color   || '#F8FAFC');
+    setVal(dom.inpAccentColor, display.accent_color || '#F59E0B');
+
+    displayState.align_h = display.align_h || 'center';
+    displayState.align_v = display.align_v || 'middle';
+    setAlignButtons();
+  }
+
+  /** Reflects displayState.align_h/align_v onto the alignment button group. */
+  function setAlignButtons() {
+    dom.alignBtns.forEach(btn => {
+      const active = btn.dataset.value === displayState[btn.dataset.group === 'h' ? 'align_h' : 'align_v'];
+      btn.classList.toggle('align-btn-active', active);
+    });
+  }
+
+  /** Shows/hides the small background-image thumbnail + filename. */
+  function renderBgImagePreview() {
+    if (!dom.bgImagePreview) return;
+    if (displayState.bg_image) {
+      dom.bgImagePreview.hidden = false;
+      dom.bgImagePreview.style.backgroundImage = `url("${displayState.bg_image}")`;
+    } else {
+      dom.bgImagePreview.hidden = true;
+      dom.bgImagePreview.style.backgroundImage = '';
+    }
   }
 
   // ===========================================================================
@@ -414,7 +487,30 @@ document.addEventListener('DOMContentLoaded', () => {
       { type: 'tcp_raw', enabled: dom.outTcpEnabled ? dom.outTcpEnabled.checked : false,
         ip: dom.outTcpIp ? dom.outTcpIp.value.trim() : '',
         port: dom.outTcpPort ? dom.outTcpPort.value.trim() : '' },
+      { type: 'ndi', enabled: dom.outNdiEnabled ? dom.outNdiEnabled.checked : false,
+        stream_name: dom.outNdiName ? dom.outNdiName.value.trim() || 'BibleCue' : 'BibleCue' },
     ];
+  }
+
+  /**
+   * Collect the Display card into a display settings object.
+   * @returns {object}
+   */
+  function collectDisplay() {
+    const bgTypeEl = document.querySelector('input[name="bg-type"]:checked');
+    return {
+      bg_type:      bgTypeEl ? bgTypeEl.value : 'color',
+      bg_color:     dom.inpBgColor ? dom.inpBgColor.value : '#060B18',
+      bg_image:     displayState.bg_image,
+      text_color:   dom.inpTextColor ? dom.inpTextColor.value : '#F8FAFC',
+      accent_color: dom.inpAccentColor ? dom.inpAccentColor.value : '#F59E0B',
+      font_family:  dom.selFontFamily ? dom.selFontFamily.value : 'Playfair Display',
+      font_weight:  dom.selFontWeight ? dom.selFontWeight.value : '500',
+      verse_size:   dom.inpVerseSize ? Number(dom.inpVerseSize.value) || 100 : 100,
+      ref_size:     dom.inpRefSize ? Number(dom.inpRefSize.value) || 100 : 100,
+      align_h:      displayState.align_h,
+      align_v:      displayState.align_v,
+    };
   }
 
   /**
@@ -422,15 +518,14 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {object}
    */
   function collectSettings() {
-    const modeEl = document.querySelector('input[name="mode"]:checked');
     return {
       translation:   dom.selTranslation ? dom.selTranslation.value          : 'KJV',
       cooldown_secs: dom.inpCooldown    ? Number(dom.inpCooldown.value)     : 8,
-      deepgram_key:  dom.inpDgKey       ? dom.inpDgKey.value.trim()         : '',
       audio_device:  dom.selDevice      ? Number(dom.selDevice.value)       : -1,
       autostart:     dom.chkAutostart   ? dom.chkAutostart.checked          : false,
-      mode:          modeEl             ? modeEl.value                      : 'google',
+      mode:          'google',  // the only mode now — see index.html for why there's no picker
       outputs:       collectOutputs(),
+      display:       collectDisplay(),
     };
   }
 
@@ -549,7 +644,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       case 'dg_status': {
-        if (dom.dgStatus)     dom.dgStatus.textContent     = msg.text || '';
         if (dom.dgStatusMain) dom.dgStatusMain.textContent = msg.text || '';
         break;
       }
@@ -732,7 +826,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsInputs = [
     dom.selTranslation,
     dom.inpCooldown,
-    dom.inpDgKey,
     dom.selDevice,
     dom.chkAutostart,
     dom.outPpIp, dom.outPpPort, dom.outPpUuid,
@@ -740,23 +833,70 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.outWebhookUrl, dom.outFilePath,
     dom.outObsIp, dom.outObsPort, dom.outObsPassword, dom.outObsSource,
     dom.outTcpIp, dom.outTcpPort,
+    dom.outNdiName,
+    dom.inpBgColor, dom.selFontFamily, dom.selFontWeight,
+    dom.inpVerseSize, dom.inpRefSize, dom.inpTextColor, dom.inpAccentColor,
   ].filter(Boolean);
 
   settingsInputs.forEach(el => {
-    const eventType = (el.type === 'checkbox') ? 'change' : 'input';
+    const eventType = (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'color') ? 'change' : 'input';
     el.addEventListener(eventType, debouncedSave);
-  });
-
-  // Mode radio buttons — immediate save, no debounce
-  document.querySelectorAll('input[name="mode"]').forEach(radio => {
-    radio.addEventListener('change', saveSettings);
   });
 
   // Output enabled checkboxes — immediate save
   [dom.outPpEnabled, dom.outEwEnabled, dom.outClipEnabled, dom.outWebhookEnabled,
-   dom.outFileEnabled, dom.outObsEnabled, dom.outTcpEnabled]
+   dom.outFileEnabled, dom.outObsEnabled, dom.outTcpEnabled, dom.outNdiEnabled]
     .filter(Boolean)
     .forEach(el => el.addEventListener('change', saveSettings));
+
+  // Background type (color/image) — immediate save, toggles which row shows
+  dom.bgTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isImage = radio.value === 'image' && radio.checked;
+      if (radio.checked) {
+        if (dom.bgColorRow) dom.bgColorRow.style.display = radio.value === 'color' ? '' : 'none';
+        if (dom.bgImageRow) dom.bgImageRow.style.display = radio.value === 'image' ? '' : 'none';
+      }
+      if (radio.checked) saveSettings();
+    });
+  });
+
+  // Alignment buttons — immediate save
+  dom.alignBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group === 'h' ? 'align_h' : 'align_v';
+      displayState[group] = btn.dataset.value;
+      setAlignButtons();
+      saveSettings();
+    });
+  });
+
+  // Background image picker — reads the chosen file as a data URL (no main-
+  // process/IPC needed, contextIsolation-safe) and stores it directly in
+  // settings, same as any other display field.
+  if (dom.btnBgImagePick && dom.inpBgImageFile) {
+    dom.btnBgImagePick.addEventListener('click', () => dom.inpBgImageFile.click());
+    dom.inpBgImageFile.addEventListener('change', () => {
+      const file = dom.inpBgImageFile.files && dom.inpBgImageFile.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        displayState.bg_image = reader.result;
+        renderBgImagePreview();
+        saveSettings();
+      };
+      reader.onerror = () => showToast('Could not read that image', 'error');
+      reader.readAsDataURL(file);
+      dom.inpBgImageFile.value = '';
+    });
+  }
+  if (dom.btnBgImageClear) {
+    dom.btnBgImageClear.addEventListener('click', () => {
+      displayState.bg_image = '';
+      renderBgImagePreview();
+      saveSettings();
+    });
+  }
 
   // ===========================================================================
   // SECTION 15: Advanced Settings Collapsible
@@ -811,6 +951,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  let displayBodyOpen = false;
+  if (dom.displayToggle && dom.displayBody) {
+    dom.displayToggle.addEventListener('click', () => {
+      displayBodyOpen = !displayBodyOpen;
+      if (displayBodyOpen) openCollapsible(dom.displayBody, dom.displayArrow);
+      else closeCollapsible(dom.displayBody, dom.displayArrow);
+    });
+  }
+
   // Output plugin expand buttons
   document.querySelectorAll('.output-expand-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -824,21 +973,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ===========================================================================
-  // SECTION 16: Show/Hide API Key
-  // ===========================================================================
-
-  if (dom.btnShowKey && dom.inpDgKey) {
-    dom.btnShowKey.addEventListener('click', () => {
-      if (dom.inpDgKey.type === 'password') {
-        dom.inpDgKey.type = 'text';
-        dom.btnShowKey.textContent = '🙈';
-      } else {
-        dom.inpDgKey.type = 'password';
-        dom.btnShowKey.textContent = '👁';
-      }
-    });
-  }
 
   // ===========================================================================
   // SECTION 17: Manual Verse
@@ -913,6 +1047,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Copy-all buttons for the Live Transcript / Scripture Detection panels
+  dom.copyLogBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const panel = targetId ? document.getElementById(targetId) : null;
+      if (!panel) return;
+      const lines = Array.from(panel.querySelectorAll('.log-entry')).map(el => el.textContent);
+      if (!lines.length) {
+        showToast('Nothing to copy yet', 'info');
+        return;
+      }
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        showToast(`Copied ${lines.length} line${lines.length === 1 ? '' : 's'}`, 'success');
+      }).catch(() => {
+        showToast('Could not copy', 'error');
+      });
+    });
+  });
+
   // ===========================================================================
   // SECTION 19: Custom Titlebar Buttons
   // ===========================================================================
@@ -926,6 +1079,52 @@ document.addEventListener('DOMContentLoaded', () => {
   if (dom.btnClose) {
     dom.btnClose.addEventListener('click', () => window.electronAPI?.close());
   }
+
+  // ── Application menu bar (File / Edit / View / Help) ────────────────────
+  const SETUP_GUIDE_URL = 'https://claude.ai/code/artifact/049238da-f9c3-4f7b-89c2-7f2a8e00ad05';
+  const MENU_ACTIONS = {
+    'restart-backend': () => { window.electronAPI?.restartPython(); showToast('Restarting backend…', 'info'); },
+    'quit':            () => window.electronAPI?.close(),
+    'cut':              () => document.execCommand('cut'),
+    'copy':             () => document.execCommand('copy'),
+    'paste':            () => document.execCommand('paste'),
+    'reload':           () => window.electronAPI?.reloadWindow(),
+    'toggle-devtools':  () => window.electronAPI?.toggleDevTools(),
+    'setup-guide':      () => window.electronAPI?.openExternalUrl(SETUP_GUIDE_URL),
+    'report-issue':     () => window.electronAPI?.openExternalUrl('https://github.com/yawpoku/biblecue/issues'),
+    'github':           () => window.electronAPI?.openExternalUrl('https://github.com/yawpoku/biblecue'),
+  };
+  document.querySelectorAll('#menubar .menubar-dropdown button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = MENU_ACTIONS[btn.dataset.action];
+      if (action) action();
+      closeAllMenus();
+    });
+  });
+  // Click-to-open (in addition to the CSS :hover), so the menu also works
+  // for keyboard/touch users, and so clicking one item then moving to an
+  // adjacent one switches menus like a real menu bar.
+  const menubarItems = document.querySelectorAll('.menubar-item');
+  function closeAllMenus() {
+    menubarItems.forEach(m => m.classList.remove('menu-open'));
+  }
+  menubarItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.menubar-dropdown')) return; // let button clicks through
+      const isOpen = item.classList.contains('menu-open');
+      closeAllMenus();
+      if (!isOpen) item.classList.add('menu-open');
+    });
+    item.addEventListener('mouseenter', () => {
+      if ([...menubarItems].some(m => m.classList.contains('menu-open'))) {
+        closeAllMenus();
+        item.classList.add('menu-open');
+      }
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#menubar')) closeAllMenus();
+  });
 
   // ── Help / setup guide modal ─────────────────────────────────────────────
   function openHelp () {

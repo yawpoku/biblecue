@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code when working with code in this repository.
+This file provides guidance to Codex when working with code in this repository.
 
 ## What this app does
 
@@ -16,7 +16,7 @@ npm start          # launches Electron + spawns ../biblecue.py automatically
 
 Python dependencies (install once):
 ```bash
-pip install sounddevice numpy scipy requests python-scriptures websockets Pillow obs-websocket-py ndi-python
+pip install sounddevice numpy scipy requests python-scriptures websockets Pillow ndi-python
 ```
 
 ## Building for distribution

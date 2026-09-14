@@ -266,6 +266,92 @@ function attachContextMenu (webContents) {
   })
 }
 
+// ---------------------------------------------------------------------------
+// Application menu — File / Edit / View / Help. The window itself is
+// frame:false with a custom-drawn titlebar, and on Windows/Linux a
+// frameless window shows no menu bar unless explicitly told to: build a
+// real one (so every command is reachable from it, not just the custom
+// titlebar buttons) and force it visible. macOS always shows the app
+// menu bar at the screen top regardless of window frame, so no visibility
+// call is needed there.
+// ---------------------------------------------------------------------------
+function buildAppMenu () {
+  const isMac = process.platform === 'darwin'
+  const SETUP_GUIDE_URL = 'https://claude.ai/code/artifact/049238da-f9c3-4f7b-89c2-7f2a8e00ad05'
+
+  const template = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    }] : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Restart Backend',
+          click: () => { killPython(); setTimeout(() => spawnPython(), 500) }
+        },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit', label: 'Exit' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        ...(isMac ? [{ role: 'zoom' }, { type: 'separator' }, { role: 'front' }] : [{ role: 'close' }])
+      ]
+    },
+    {
+      role: 'help',
+      submenu: [
+        { label: 'Setup Guide', click: () => shell.openExternal(SETUP_GUIDE_URL) },
+        { label: 'Report an Issue', click: () => shell.openExternal('https://github.com/yawpoku/biblecue/issues') },
+        { label: 'View on GitHub', click: () => shell.openExternal('https://github.com/yawpoku/biblecue') },
+        { type: 'separator' },
+        { label: `BibleCue v${app.getVersion()}`, enabled: false }
+      ]
+    }
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 function createWindow () {
   const state = loadWindowState()
 
@@ -298,6 +384,14 @@ function createWindow () {
   // Load the renderer
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
   attachContextMenu(mainWindow.webContents)
+
+  // buildAppMenu() still matters on macOS, where the app menu bar always
+  // lives at the screen top regardless of window frame (giving Cmd+Q,
+  // Cmd+C, etc.). On Windows/Linux a frame:false window has no native
+  // chrome to host a menu bar in at all — setMenuBarVisibility(true) does
+  // nothing there — so the visible File/Edit/View/Help row on Windows is
+  // the custom HTML #menubar in index.html/app.js instead.
+  buildAppMenu()
 
   // Show window gracefully once content is ready
   mainWindow.once('ready-to-show', () => {
@@ -385,6 +479,14 @@ ipcMain.handle('maximize-window', () => {
 
 ipcMain.handle('close-window', () => {
   if (mainWindow) mainWindow.close()
+})
+
+ipcMain.handle('reload-window', () => {
+  if (mainWindow) mainWindow.reload()
+})
+
+ipcMain.handle('toggle-devtools', () => {
+  if (mainWindow) mainWindow.webContents.toggleDevTools()
 })
 
 // Python status / control

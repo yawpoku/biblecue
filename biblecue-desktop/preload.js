@@ -12,4 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFullscreen: () => ipcRenderer.invoke('open-fullscreen'),
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
   getWsPort: () => ipcRenderer.invoke('get-ws-port'),
+  reloadWindow: () => ipcRenderer.invoke('reload-window'),
+  toggleDevTools: () => ipcRenderer.invoke('toggle-devtools'),
 })

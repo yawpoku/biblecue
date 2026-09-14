@@ -6,29 +6,57 @@
   <title>BibleCue — Live Scripture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Defaults — overwritten live from settings.display once it arrives */
+      --bg-color: #060B18;
+      --bg-image: none;
+      --text-color: #F8FAFC;
+      --accent-color: #F59E0B;
+      --font-family: 'Playfair Display', serif;
+      --font-weight: 500;
+      --verse-scale: 1;
+      --ref-scale: 1;
+      --align-items: center;   /* vertical */
+      --justify-items: center; /* horizontal, for the text block */
+      --text-align: center;
+    }
 
     html, body {
       height: 100vh;
       overflow: hidden;
-      background: #060B18;
-      color: #F8FAFC;
+      background: var(--bg-color);
+      color: var(--text-color);
       font-family: 'Space Grotesk', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      align-items: var(--align-items);
+      justify-items: var(--justify-items);
       padding: 60px 80px;
       position: relative;
+      background-image: var(--bg-image);
+      background-size: cover;
+      background-position: center;
     }
 
-    /* Subtle radial glow behind verse */
+    /* Darken a background image slightly so text stays legible regardless
+       of what's in the photo. */
+    body.has-bg-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.32);
+      pointer-events: none;
+    }
+
+    /* Subtle radial glow behind verse — only shown on the plain color
+       background, since it would muddy a custom image */
     .glow {
       position: absolute;
       width: 600px;
@@ -36,69 +64,77 @@
       background: radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 70%);
       pointer-events: none;
     }
+    body.has-bg-image .glow { display: none; }
 
     .verse-block {
       position: relative;
-      text-align: center;
+      z-index: 1;
+      text-align: var(--text-align);
       max-width: 1100px;
       width: 100%;
     }
 
     #verse-text {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(28px, 4vw, 64px);
-      font-weight: 500;
+      font-family: var(--font-family);
+      font-size: calc(clamp(28px, 4vw, 64px) * var(--verse-scale));
+      font-weight: var(--font-weight);
       line-height: 1.45;
-      color: #F8FAFC;
+      color: var(--text-color);
       letter-spacing: 0.01em;
       transition: opacity 0.4s ease;
+      text-wrap: balance;
     }
 
     #verse-text.empty {
-      color: rgba(248,250,252,0.2);
+      color: rgba(248,250,252,0.35);
       font-style: italic;
       font-size: clamp(18px, 2vw, 28px);
     }
 
     #verse-ref {
       margin-top: 28px;
-      font-size: clamp(13px, 1.4vw, 22px);
+      font-size: calc(clamp(13px, 1.4vw, 22px) * var(--ref-scale));
       font-weight: 500;
-      color: #F59E0B;
+      color: var(--accent-color);
       letter-spacing: 0.12em;
       text-transform: uppercase;
       transition: opacity 0.4s ease;
     }
 
-    .gold-line {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, #F59E0B 30%, #F59E0B 70%, transparent);
-    }
-
-    .status-bar {
+    /* Fullscreen toggle — a real "fill the whole screen" control (Electron
+       wires the Fullscreen API to true OS-level fullscreen automatically).
+       Stays out of the way: near-invisible until the pointer moves, fades
+       back out after a few seconds so it never shows up on the projector. */
+    #btn-fullscreen-toggle {
       position: absolute;
       top: 16px;
-      right: 20px;
+      left: 20px;
+      z-index: 3;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 11px;
-      color: rgba(248,250,252,0.35);
-      letter-spacing: 0.06em;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: rgba(248,250,252,0.75);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 20px;
+      padding: 7px 13px 7px 11px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.25s ease, background 0.15s ease;
+      pointer-events: none;
     }
-
-    .conn-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #EF4444;
-      transition: background 0.3s;
+    body.controls-visible #btn-fullscreen-toggle {
+      opacity: 1;
+      pointer-events: auto;
     }
-    .conn-dot.connected { background: #10B981; }
+    #btn-fullscreen-toggle:hover { background: rgba(255,255,255,0.14); }
+    #btn-fullscreen-toggle svg { width: 13px; height: 13px; flex: none; }
 
     @keyframes fade-in {
       from { opacity: 0; transform: translateY(8px); }
@@ -112,23 +148,20 @@
 <body>
   <div class="glow"></div>
 
-  <div class="status-bar">
-    <div class="conn-dot" id="conn-dot"></div>
-    <span id="conn-text">Connecting…</span>
-  </div>
+  <button id="btn-fullscreen-toggle" title="Fill the whole screen (F)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    <span id="fullscreen-toggle-label">Fill screen</span>
+  </button>
 
   <div class="verse-block">
     <div id="verse-text" class="empty">Waiting for scripture…</div>
     <div id="verse-ref"></div>
   </div>
 
-  <div class="gold-line"></div>
-
   <script>
     const verseEl = document.getElementById('verse-text');
     const refEl   = document.getElementById('verse-ref');
-    const dotEl   = document.getElementById('conn-dot');
-    const connEl  = document.getElementById('conn-text');
+    const root    = document.documentElement;
 
     const WS_URL = 'ws://127.0.0.1:8765';
     let ws = null;
@@ -139,8 +172,7 @@
 
       ws.onopen = () => {
         retryDelay = 1000;
-        dotEl.classList.add('connected');
-        connEl.textContent = 'Live';
+        ws.send(JSON.stringify({ type: 'get_settings' }));
       };
 
       ws.onmessage = (event) => {
@@ -148,13 +180,13 @@
           const msg = JSON.parse(event.data);
           if (msg.type === 'verse_display') {
             showVerse(msg.verse_text, msg.reference, msg.translation);
+          } else if (msg.type === 'settings_response' && msg.data && msg.data.display) {
+            applyDisplay(msg.data.display);
           }
         } catch {}
       };
 
       ws.onclose = () => {
-        dotEl.classList.remove('connected');
-        connEl.textContent = 'Reconnecting…';
         setTimeout(connect, retryDelay);
         retryDelay = Math.min(retryDelay * 2, 10000);
       };
@@ -182,6 +214,71 @@
         refEl.classList.remove('verse-updated');
       }, 500);
     }
+
+    /**
+     * Applies the Display settings (background, fonts, colors, alignment)
+     * from the main app's Display card, live — this window re-applies
+     * automatically whenever those settings change elsewhere, no reopen
+     * needed.
+     */
+    function applyDisplay(d) {
+      if (!d) return;
+      root.style.setProperty('--bg-color', d.bg_color || '#060B18');
+      root.style.setProperty('--text-color', d.text_color || '#F8FAFC');
+      root.style.setProperty('--accent-color', d.accent_color || '#F59E0B');
+      root.style.setProperty('--font-family', d.font_family || "'Playfair Display', serif");
+      root.style.setProperty('--font-weight', d.font_weight || '500');
+      root.style.setProperty('--verse-scale', String(Math.max(0.3, (d.verse_size || 100) / 100)));
+      root.style.setProperty('--ref-scale', String(Math.max(0.3, (d.ref_size || 100) / 100)));
+
+      const alignH = d.align_h || 'center';
+      const alignV = d.align_v || 'middle';
+      root.style.setProperty('--justify-items', alignH === 'left' ? 'start' : alignH === 'right' ? 'end' : 'center');
+      root.style.setProperty('--text-align', alignH);
+      root.style.setProperty('--align-items', alignV === 'top' ? 'start' : alignV === 'bottom' ? 'end' : 'center');
+
+      if (d.bg_type === 'image' && d.bg_image) {
+        root.style.setProperty('--bg-image', `url("${d.bg_image}")`);
+        document.body.classList.add('has-bg-image');
+      } else {
+        root.style.setProperty('--bg-image', 'none');
+        document.body.classList.remove('has-bg-image');
+      }
+    }
+
+    // ── Fullscreen toggle — fills the entire screen (Electron maps the
+    // standard Fullscreen API straight to native OS fullscreen for the
+    // window), for showing this on a projector/second display cleanly. ──
+    const btnFs = document.getElementById('btn-fullscreen-toggle');
+    const fsLabel = document.getElementById('fullscreen-toggle-label');
+
+    function updateFsLabel() {
+      fsLabel.textContent = document.fullscreenElement ? 'Exit fill screen' : 'Fill screen';
+    }
+    function toggleFullscreen() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    }
+    btnFs.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFsLabel);
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    });
+
+    // Controls (the fullscreen button + status bar) fade in on mouse
+    // movement and back out after a few seconds — this window is meant to
+    // be shown to an audience, so nothing but the verse should linger.
+    let hideTimer = null;
+    function showControls() {
+      document.body.classList.add('controls-visible');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => document.body.classList.remove('controls-visible'), 2500);
+    }
+    window.addEventListener('mousemove', showControls);
+    showControls();
 
     connect();
   </script>
