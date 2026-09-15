@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inpTextColor:     document.getElementById('inp-text-color'),
     inpAccentColor:   document.getElementById('inp-accent-color'),
     alignBtns:        document.querySelectorAll('.align-btn'),
+    stepperBtns:      document.querySelectorAll('.stepper-btn'),
 
     // Advanced settings
     advToggle:        document.getElementById('adv-toggle'),
@@ -430,6 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setVal(dom.selFontWeight, display.font_weight || '500');
     setVal(dom.inpVerseSize, display.verse_size ?? 100);
     setVal(dom.inpRefSize,   display.ref_size ?? 100);
+    updateStepperBounds(dom.inpVerseSize);
+    updateStepperBounds(dom.inpRefSize);
     setVal(dom.inpTextColor,   display.text_color   || '#F8FAFC');
     setVal(dom.inpAccentColor, display.accent_color || '#F59E0B');
 
@@ -443,6 +446,18 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.alignBtns.forEach(btn => {
       const active = btn.dataset.value === displayState[btn.dataset.group === 'h' ? 'align_h' : 'align_v'];
       btn.classList.toggle('align-btn-active', active);
+    });
+  }
+
+  /** Disables a stepper's -/+ buttons once the input hits that bound. */
+  function updateStepperBounds(input) {
+    if (!input) return;
+    const min = input.min !== '' ? Number(input.min) : -Infinity;
+    const max = input.max !== '' ? Number(input.max) : Infinity;
+    const val = Number(input.value);
+    document.querySelectorAll(`.stepper-btn[data-step-target="${input.id}"]`).forEach(btn => {
+      const dir = Number(btn.dataset.stepDir);
+      btn.disabled = dir < 0 ? val <= min : val >= max;
     });
   }
 
@@ -841,6 +856,9 @@ document.addEventListener('DOMContentLoaded', () => {
   settingsInputs.forEach(el => {
     const eventType = (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'color') ? 'change' : 'input';
     el.addEventListener(eventType, debouncedSave);
+    if (el === dom.inpVerseSize || el === dom.inpRefSize) {
+      el.addEventListener('input', () => updateStepperBounds(el));
+    }
   });
 
   // Output enabled checkboxes — immediate save
@@ -868,6 +886,26 @@ document.addEventListener('DOMContentLoaded', () => {
       displayState[group] = btn.dataset.value;
       setAlignButtons();
       saveSettings();
+    });
+  });
+
+  // Size steppers (verse/reference size) — number-input spinners are hidden
+  // app-wide for a consistent look, so +/- buttons are the only way to
+  // adjust these without typing. Reuses the existing debounced-save
+  // listener already attached to the input by dispatching a real 'input'
+  // event rather than duplicating the save call here.
+  dom.stepperBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.stepTarget);
+      if (!input) return;
+      const step = Number(input.step) || 1;
+      const min  = input.min !== '' ? Number(input.min) : -Infinity;
+      const max  = input.max !== '' ? Number(input.max) : Infinity;
+      const dir  = Number(btn.dataset.stepDir);
+      const next = Math.min(max, Math.max(min, (Number(input.value) || 0) + dir * step));
+      input.value = next;
+      updateStepperBounds(input);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     });
   });
 

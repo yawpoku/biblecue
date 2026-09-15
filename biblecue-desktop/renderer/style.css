@@ -2630,6 +2630,51 @@ body[data-theme="light"] .help-section code {
   color: var(--gold);
 }
 
+/* ── Size Stepper (verse/reference size +/-) ─────────────────── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stepper-btn {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--fg-2);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.stepper-btn:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+}
+.stepper-btn:active {
+  background: rgba(245, 158, 11, 0.12);
+}
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.inp-stepper {
+  max-width: 48px;
+  flex: 0 0 48px;
+  text-align: center;
+  padding: 0 4px;
+}
+
 /* ============================================================
    SECTION 23: APPLICATION MENU BAR (File / Edit / View / Help)
    ============================================================ */

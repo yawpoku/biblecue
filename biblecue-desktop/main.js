@@ -532,7 +532,10 @@ ipcMain.handle('open-fullscreen', () => {
 })
 
 ipcMain.handle('open-external-url', (_, url) => {
-  if (url && url.startsWith('http://127.0.0.1:')) {
+  // http://127.0.0.1: for the local browser-listener link, https:// for the
+  // Help menu's Setup Guide / GitHub links — both are hardcoded strings in
+  // the renderer, never user input, so this isn't opening up arbitrary URLs.
+  if (typeof url === 'string' && (url.startsWith('http://127.0.0.1:') || url.startsWith('https://'))) {
     shell.openExternal(url)
   }
 })

@@ -292,8 +292,16 @@
               <label>Font</label>
               <select id="sel-font-family" class="sel">
                 <option value="Playfair Display">Playfair Display (serif)</option>
-                <option value="Space Grotesk">Space Grotesk (sans)</option>
+                <option value="Merriweather">Merriweather (serif)</option>
+                <option value="Lora">Lora (serif)</option>
+                <option value="Cormorant Garamond">Cormorant Garamond (serif)</option>
+                <option value="EB Garamond">EB Garamond (serif)</option>
+                <option value="Libre Baskerville">Libre Baskerville (serif)</option>
                 <option value="Georgia, serif">Georgia (system serif)</option>
+                <option value="Space Grotesk">Space Grotesk (sans)</option>
+                <option value="Montserrat">Montserrat (sans)</option>
+                <option value="Inter">Inter (sans)</option>
+                <option value="Poppins">Poppins (sans)</option>
                 <option value="'Segoe UI', Arial, sans-serif">Segoe UI (system sans)</option>
                 <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
               </select>
@@ -310,11 +318,19 @@
             <div class="form-grid">
               <div class="form-row">
                 <label>Verse size (%)</label>
-                <input type="number" id="inp-verse-size" class="inp inp-sm" min="50" max="200" step="5">
+                <div class="stepper">
+                  <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="-1" aria-label="Decrease verse size">−</button>
+                  <input type="number" id="inp-verse-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
+                  <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="1" aria-label="Increase verse size">+</button>
+                </div>
               </div>
               <div class="form-row">
                 <label>Reference size (%)</label>
-                <input type="number" id="inp-ref-size" class="inp inp-sm" min="50" max="200" step="5">
+                <div class="stepper">
+                  <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="-1" aria-label="Decrease reference size">−</button>
+                  <input type="number" id="inp-ref-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
+                  <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="1" aria-label="Increase reference size">+</button>
+                </div>
               </div>
             </div>
             <div class="form-grid">
