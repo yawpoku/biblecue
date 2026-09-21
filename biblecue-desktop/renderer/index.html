@@ -6,115 +6,289 @@
   <title>BibleCue</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;1,400&family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="../assets/bLogo.png">
 </head>
 <body>
 
-  <!-- CUSTOM TITLEBAR (frameless window) -->
-  <div id="titlebar" data-version="2.0">
+  <!-- CUSTOM TITLEBAR (frameless window) — the File/Edit/View/Help menu
+       lives inline here now, next to the logo, rather than as its own row.
+       frame:false means Windows/Linux have no native chrome to host a real
+       menu bar in, so this is a lightweight HTML substitute; every command
+       it holds is also reachable another way (titlebar buttons, keyboard,
+       context menu). Hidden on macOS, where the real OS menu bar (built in
+       main.js) already covers this. -->
+  <div id="titlebar" data-version="3.0">
     <div class="titlebar-left">
       <span class="cross-icon">
         <img src="../assets/bLogo.png" alt="BibleCue" class="titlebar-logo">
       </span>
       <span class="app-name">BibleCue</span>
+      <div id="menubar">
+        <div class="menubar-item" tabindex="0">
+          <span class="menubar-label">File</span>
+          <div class="menubar-dropdown">
+            <button data-action="restart-backend">Restart Backend</button>
+            <div class="menubar-sep"></div>
+            <button data-action="quit">Exit</button>
+          </div>
+        </div>
+        <div class="menubar-item" tabindex="0">
+          <span class="menubar-label">Edit</span>
+          <div class="menubar-dropdown">
+            <button data-action="cut">Cut</button>
+            <button data-action="copy">Copy</button>
+            <button data-action="paste">Paste</button>
+          </div>
+        </div>
+        <div class="menubar-item" tabindex="0">
+          <span class="menubar-label">View</span>
+          <div class="menubar-dropdown">
+            <button data-action="reload">Reload</button>
+            <button data-action="toggle-devtools">Toggle Developer Tools</button>
+          </div>
+        </div>
+        <div class="menubar-item" tabindex="0">
+          <span class="menubar-label">Help</span>
+          <div class="menubar-dropdown">
+            <button data-action="setup-guide">Setup Guide</button>
+            <button data-action="report-issue">Report an Issue</button>
+            <button data-action="github">View on GitHub</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="titlebar-controls">
       <button id="btn-help" title="Setup guide">?</button>
-      <button id="btn-theme" title="Toggle light/dark mode">☀</button>
       <button id="btn-minimize">—</button>
       <button id="btn-maximize">⤢</button>
       <button id="btn-close">✕</button>
     </div>
   </div>
 
-  <!-- APPLICATION MENU BAR — File / Edit / View / Help. frame:false means
-       Windows/Linux have no native chrome to host a real menu bar in, so
-       this is a lightweight HTML substitute; every command it holds is
-       also reachable another way (titlebar buttons, keyboard, context
-       menu). Hidden on macOS, where the real OS menu bar (built in
-       main.js) already covers this. -->
-  <div id="menubar">
-    <div class="menubar-item" tabindex="0">
-      <span class="menubar-label">File</span>
-      <div class="menubar-dropdown">
-        <button data-action="restart-backend">Restart Backend</button>
-        <div class="menubar-sep"></div>
-        <button data-action="quit">Exit</button>
+  <!-- APP SHELL: rail + page container -->
+  <div class="app">
+
+    <!-- RAIL NAVIGATION -->
+    <aside class="rail" aria-label="Primary navigation">
+      <nav class="rail-nav">
+        <button class="rail-btn active" data-page="page-live" aria-label="Live control">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span>Live control</span>
+        </button>
+        <button class="rail-btn" data-page="page-theme" aria-label="Theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h1.5c2.2 0 4-1.8 4-4C20.5 6.4 16.7 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="15" cy="7.5" r="1"/></svg>
+          <span>Theme</span>
+        </button>
+      </nav>
+      <div class="rail-bottom">
+        <button class="rail-btn" data-page="page-settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.4 2.4-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2.4-2.4.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H4.3v-3.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.4-2.4.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h3.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.4 2.4-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <span>Settings</span>
+        </button>
       </div>
-    </div>
-    <div class="menubar-item" tabindex="0">
-      <span class="menubar-label">Edit</span>
-      <div class="menubar-dropdown">
-        <button data-action="cut">Cut</button>
-        <button data-action="copy">Copy</button>
-        <button data-action="paste">Paste</button>
-      </div>
-    </div>
-    <div class="menubar-item" tabindex="0">
-      <span class="menubar-label">View</span>
-      <div class="menubar-dropdown">
-        <button data-action="reload">Reload</button>
-        <button data-action="toggle-devtools">Toggle Developer Tools</button>
-      </div>
-    </div>
-    <div class="menubar-item" tabindex="0">
-      <span class="menubar-label">Help</span>
-      <div class="menubar-dropdown">
-        <button data-action="setup-guide">Setup Guide</button>
-        <button data-action="report-issue">Report an Issue</button>
-        <button data-action="github">View on GitHub</button>
-      </div>
-    </div>
-  </div>
+    </aside>
 
-  <!-- APP LAYOUT: sidebar + main -->
-  <div id="app-layout">
+    <!-- PAGE CONTAINER -->
+    <div id="page-container">
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar">
-
-      <!-- Transcription mode: Google Speech is now the only mode, so there's
-           nothing to choose — no card shown on the dashboard. The mode value
-           itself still lives in settings (hardcoded to "google" in app.js)
-           in case a future mode is ever added back. -->
-
-      <!-- Outputs Card -->
-      <div class="card card-collapsible" id="card-outputs">
-        <div class="card-header collapsible-header" id="outputs-toggle">
-          <span class="card-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </span>
-          <span class="card-title">OUTPUTS</span>
-          <span class="collapse-arrow" id="outputs-arrow">▸</span>
-        </div>
-        <div class="collapsible-body" id="outputs-body">
-
-          <!-- Translation + Cooldown (moved here from old ProPresenter card) -->
-          <div class="form-grid">
-            <div class="form-row">
-              <label>Translation</label>
-              <select id="sel-translation" class="sel">
-                <option>KJV</option>
-                <option>WEB</option>
-                <option>ASV</option>
-                <option>BBE</option>
-                <option>DARBY</option>
-                <option>YLT</option>
-                <option>NKJV</option>
-                <option>NIV</option>
-                <option>ESV</option>
-              </select>
-              <span class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px;display:block">NKJV/NIV/ESV use closest free equivalent</span>
+      <!-- ══════════════════ LIVE CONTROL ══════════════════ -->
+      <section class="page active" id="page-live">
+          <div class="workspace">
+            <div class="page-head">
+              <div>
+                <h1>Live control</h1>
+                <p id="listen-label">Not listening</p>
+              </div>
+              <div class="service-tools">
+                <button id="btn-listen" class="btn-listen btn-listen-start">▶&nbsp; Start Listening</button>
+              </div>
             </div>
-            <div class="form-row">
-              <label>Cooldown (s)</label>
-              <input type="number" id="inp-cooldown" min="1" max="60" class="inp inp-sm">
+
+            <div class="canvas-row">
+              <section class="live-canvas" aria-label="Verse currently on screen">
+                <div class="on-air"><i class="pulse-dot" id="pulse-dot"></i><span id="on-air-label">OFF AIR</span></div>
+                <div class="canvas-tools">
+                  <button class="icon-btn" id="btn-copy-verse" title="Copy verse">⧉</button>
+                  <button class="icon-btn" id="btn-fullscreen" title="Open fullscreen">⛶</button>
+                </div>
+                <article class="scripture">
+                  <blockquote id="verse-text">—</blockquote>
+                  <p class="reference" id="verse-ref"></p>
+                  <p class="translation" id="dg-status-main"></p>
+                </article>
+                <div class="canvas-caption" id="listener-url-row" style="display:none">
+                  <b>●</b> Listener: <a id="listener-url-link" href="#">—</a>
+                </div>
+                <div class="waveform-bars" id="waveform-bars"><span></span><span></span><span></span><span></span><span></span></div>
+              </section>
+
+              <div class="manual-send-box">
+                <span class="manual-send-label">📖 Send verse manually</span>
+                <input type="text" id="inp-manual" placeholder="e.g. John 3:16 · next verse" class="inp">
+                <button id="btn-manual-send" class="btn-send" title="Send">Send</button>
+                <div class="manual-nav-row">
+                  <button class="nav-btn" id="btn-verse-prev" title="Previous verse">‹ Prev</button>
+                  <button class="nav-btn" id="btn-verse-next" title="Next verse">Next ›</button>
+                </div>
+              </div>
+            </div>
+
+            <section class="events">
+              <article class="event-panel" id="panel-transcript">
+                <div class="event-head">
+                  <div class="event-title"><i></i>LIVE TRANSCRIPT</div>
+                  <span class="event-head-actions">
+                    <span class="event-count" id="tx-count">0</span>
+                    <button class="icon-btn icon-btn-sm btn-copy-log" data-target="transcript-log" title="Copy all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn icon-btn-sm btn-clear-log" data-target="transcript-log" title="Clear">✕</button>
+                  </span>
+                </div>
+                <div class="event-list log-body" id="transcript-log"></div>
+              </article>
+              <article class="event-panel" id="panel-detection">
+                <div class="event-head">
+                  <div class="event-title detected"><i></i>DETECTED REFERENCES</div>
+                  <span class="event-head-actions">
+                    <span class="event-count" id="dt-count">0</span>
+                    <button class="icon-btn icon-btn-sm btn-copy-log" data-target="detection-log" title="Copy all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn icon-btn-sm btn-clear-log" data-target="detection-log" title="Clear">✕</button>
+                  </span>
+                </div>
+                <div class="event-list log-body" id="detection-log"></div>
+              </article>
+            </section>
+          </div>
+      </section>
+
+      <!-- ══════════════════ THEME (formerly Display) ══════════════════ -->
+      <section class="page" id="page-theme">
+        <div class="page-head"><div><h1>Theme</h1><p>Styles the fullscreen window and the NDI video output</p></div></div>
+
+        <div class="theme-layout">
+        <div class="theme-preview-col">
+          <div class="theme-preview" id="theme-preview">
+            <div class="theme-preview-inner" id="theme-preview-inner">
+              <blockquote id="theme-preview-text">For God so loved the world…</blockquote>
+              <p id="theme-preview-ref">John 3:16</p>
             </div>
           </div>
+        </div>
+        <div class="theme-fields-col">
 
-          <div class="adv-divider"></div>
+        <div class="card">
+          <div class="adv-section-title">Background</div>
+          <div class="radio-group radio-group-inline">
+            <label class="radio-option radio-option-sm" id="bg-type-color">
+              <input type="radio" name="bg-type" value="color" checked>
+              <span class="radio-custom"></span>
+              <span class="radio-label">Color</span>
+            </label>
+            <label class="radio-option radio-option-sm" id="bg-type-image">
+              <input type="radio" name="bg-type" value="image">
+              <span class="radio-custom"></span>
+              <span class="radio-label">Image</span>
+            </label>
+          </div>
+          <div class="form-row" id="bg-color-row">
+            <label>Background color</label>
+            <input type="color" id="inp-bg-color" class="inp-color" value="#191919">
+          </div>
+          <div class="form-row" id="bg-image-row" style="display:none">
+            <label>Background image</label>
+            <div class="input-with-btn">
+              <button id="btn-bg-image-pick" class="btn-ghost-sm" type="button">Choose image…</button>
+              <button id="btn-bg-image-clear" class="btn-icon" title="Remove image">✕</button>
+            </div>
+            <input type="file" id="inp-bg-image-file" accept="image/*" hidden>
+            <div id="bg-image-preview" class="bg-image-preview" hidden></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="adv-section-title">Text</div>
+          <div class="form-row">
+            <label>Font</label>
+            <select id="sel-font-family" class="sel">
+              <option value="Playfair Display">Playfair Display (serif)</option>
+              <option value="Merriweather">Merriweather (serif)</option>
+              <option value="Lora">Lora (serif)</option>
+              <option value="Cormorant Garamond">Cormorant Garamond (serif)</option>
+              <option value="EB Garamond">EB Garamond (serif)</option>
+              <option value="Libre Baskerville">Libre Baskerville (serif)</option>
+              <option value="Georgia, serif">Georgia (system serif)</option>
+              <option value="Space Grotesk">Space Grotesk (sans)</option>
+              <option value="Montserrat">Montserrat (sans)</option>
+              <option value="Inter">Inter (sans)</option>
+              <option value="Poppins">Poppins (sans)</option>
+              <option value="'Segoe UI', Arial, sans-serif">Segoe UI (system sans)</option>
+              <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Weight</label>
+            <select id="sel-font-weight" class="sel">
+              <option value="400">Regular</option>
+              <option value="500" selected>Medium</option>
+              <option value="600">Semibold</option>
+              <option value="700">Bold</option>
+            </select>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Verse size (%)</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="-1" aria-label="Decrease verse size">−</button>
+                <input type="number" id="inp-verse-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
+                <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="1" aria-label="Increase verse size">+</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Reference size (%)</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="-1" aria-label="Decrease reference size">−</button>
+                <input type="number" id="inp-ref-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
+                <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="1" aria-label="Increase reference size">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Text color</label>
+              <input type="color" id="inp-text-color" class="inp-color" value="#F8FAFC">
+            </div>
+            <div class="form-row">
+              <label>Accent color</label>
+              <input type="color" id="inp-accent-color" class="inp-color" value="#ffb703">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="adv-section-title">Alignment</div>
+          <div class="align-row">
+            <button class="align-btn" id="align-h-left" data-group="h" data-value="left" title="Left">⇤</button>
+            <button class="align-btn align-btn-active" id="align-h-center" data-group="h" data-value="center" title="Center">≡</button>
+            <button class="align-btn" id="align-h-right" data-group="h" data-value="right" title="Right">⇥</button>
+            <span class="align-sep"></span>
+            <button class="align-btn" id="align-v-top" data-group="v" data-value="top" title="Top">⤒</button>
+            <button class="align-btn align-btn-active" id="align-v-middle" data-group="v" data-value="middle" title="Middle">↕</button>
+            <button class="align-btn" id="align-v-bottom" data-group="v" data-value="bottom" title="Bottom">⤓</button>
+          </div>
+        </div>
+
+        </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════ SETTINGS ══════════════════ -->
+      <section class="page" id="page-settings">
+        <div class="page-head"><div><h1>Settings</h1><p>Translation, timing, and audio input</p></div></div>
+
+        <div class="card">
+          <div class="adv-section-title">🔌 Outputs</div>
+          <p class="form-hint" style="margin-bottom:10px">Every detected verse is sent to all enabled outputs below.</p>
 
           <!-- ProPresenter -->
           <div class="output-plugin-row">
@@ -133,6 +307,40 @@
             </div>
           </div>
 
+          <!-- OBS WebSocket -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-obs-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">OBS Studio</span>
+              <button class="output-expand-btn" data-target="out-obs-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-obs-cfg">
+              <div class="form-row"><label>IP</label><input type="text" id="out-obs-ip" class="inp" placeholder="127.0.0.1"></div>
+              <div class="form-row"><label>Port</label><input type="text" id="out-obs-port" class="inp inp-sm" placeholder="4455"></div>
+              <div class="form-row"><label>Password</label><input type="password" id="out-obs-password" class="inp"></div>
+              <div class="form-row"><label>Text Source</label><input type="text" id="out-obs-source" class="inp" placeholder="BibleVerse"></div>
+            </div>
+          </div>
+
+          <!-- NDI -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-ndi-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">NDI <span class="tag">Video</span></span>
+              <button class="output-expand-btn" data-target="out-ndi-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-ndi-cfg">
+              <div class="form-row"><label>Stream Name</label><input type="text" id="out-ndi-name" class="inp" placeholder="BibleCue"></div>
+              <div class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px">Sends the styled verse as a live 1920×1080 video source — pick it up in OBS, vMix, or any NDI receiver. Uses the Theme settings for background/fonts/colors. Requires the NDI runtime.</div>
+            </div>
+          </div>
+
           <!-- EasyWorship -->
           <div class="output-plugin-row">
             <div class="output-plugin-header">
@@ -145,17 +353,6 @@
             </div>
             <div class="output-plugin-cfg" id="out-ew-cfg">
               <div class="form-row"><label>Path</label><input type="text" id="out-ew-path" class="inp" placeholder="C:\BibleCue\easyworship_verse.txt"></div>
-            </div>
-          </div>
-
-          <!-- Clipboard -->
-          <div class="output-plugin-row">
-            <div class="output-plugin-header">
-              <label class="checkbox-label">
-                <input type="checkbox" id="out-clip-enabled">
-                <span class="checkbox-custom"></span>
-              </label>
-              <span class="output-plugin-name">Clipboard</span>
             </div>
           </div>
 
@@ -189,24 +386,6 @@
             </div>
           </div>
 
-          <!-- OBS WebSocket -->
-          <div class="output-plugin-row">
-            <div class="output-plugin-header">
-              <label class="checkbox-label">
-                <input type="checkbox" id="out-obs-enabled">
-                <span class="checkbox-custom"></span>
-              </label>
-              <span class="output-plugin-name">OBS Studio</span>
-              <button class="output-expand-btn" data-target="out-obs-cfg">▸</button>
-            </div>
-            <div class="output-plugin-cfg" id="out-obs-cfg">
-              <div class="form-row"><label>IP</label><input type="text" id="out-obs-ip" class="inp" placeholder="127.0.0.1"></div>
-              <div class="form-row"><label>Port</label><input type="text" id="out-obs-port" class="inp inp-sm" placeholder="4455"></div>
-              <div class="form-row"><label>Password</label><input type="password" id="out-obs-password" class="inp"></div>
-              <div class="form-row"><label>Text Source</label><input type="text" id="out-obs-source" class="inp" placeholder="BibleVerse"></div>
-            </div>
-          </div>
-
           <!-- TCP Raw -->
           <div class="output-plugin-row">
             <div class="output-plugin-header">
@@ -223,269 +402,98 @@
             </div>
           </div>
 
-          <!-- NDI -->
+          <!-- Clipboard -->
           <div class="output-plugin-row">
             <div class="output-plugin-header">
               <label class="checkbox-label">
-                <input type="checkbox" id="out-ndi-enabled">
+                <input type="checkbox" id="out-clip-enabled">
                 <span class="checkbox-custom"></span>
               </label>
-              <span class="output-plugin-name">NDI <span class="tag">Video</span></span>
-              <button class="output-expand-btn" data-target="out-ndi-cfg">▸</button>
-            </div>
-            <div class="output-plugin-cfg" id="out-ndi-cfg">
-              <div class="form-row"><label>Stream Name</label><input type="text" id="out-ndi-name" class="inp" placeholder="BibleCue"></div>
-              <div class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px">Sends the styled verse as a live 1920×1080 video source — pick it up in OBS, vMix, or any NDI receiver. Uses the Display settings below for background/fonts/colors. Requires the NDI runtime.</div>
+              <span class="output-plugin-name">Clipboard</span>
             </div>
           </div>
 
-          <div id="save-indicator" class="save-indicator">✓ Saved</div>
         </div>
-      </div>
 
-      <!-- Display Settings (collapsible) — background/fonts/alignment for
-           the fullscreen window and the NDI video output -->
-      <div class="card card-collapsible" id="card-display">
-        <div class="card-header collapsible-header" id="display-toggle">
-          <span class="card-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </span>
-          <span class="card-title">DISPLAY</span>
-          <span class="collapse-arrow" id="display-arrow">▸</span>
-        </div>
-        <div class="collapsible-body" id="display-body">
-
-          <div class="adv-section">
-            <div class="adv-section-title">Background</div>
-            <div class="radio-group radio-group-inline">
-              <label class="radio-option radio-option-sm" id="bg-type-color">
-                <input type="radio" name="bg-type" value="color" checked>
-                <span class="radio-custom"></span>
-                <span class="radio-label">Color</span>
-              </label>
-              <label class="radio-option radio-option-sm" id="bg-type-image">
-                <input type="radio" name="bg-type" value="image">
-                <span class="radio-custom"></span>
-                <span class="radio-label">Image</span>
-              </label>
-            </div>
-            <div class="form-row" id="bg-color-row">
-              <label>Background color</label>
-              <input type="color" id="inp-bg-color" class="inp-color" value="#060B18">
-            </div>
-            <div class="form-row" id="bg-image-row" style="display:none">
-              <label>Background image</label>
-              <div class="input-with-btn">
-                <button id="btn-bg-image-pick" class="btn-ghost-sm" type="button">Choose image…</button>
-                <button id="btn-bg-image-clear" class="btn-icon" title="Remove image">✕</button>
-              </div>
-              <input type="file" id="inp-bg-image-file" accept="image/*" hidden>
-              <div id="bg-image-preview" class="bg-image-preview" hidden></div>
-            </div>
-          </div>
-
-          <div class="adv-divider"></div>
-
-          <div class="adv-section">
-            <div class="adv-section-title">Text</div>
+        <div class="card">
+          <div class="form-grid">
             <div class="form-row">
-              <label>Font</label>
-              <select id="sel-font-family" class="sel">
-                <option value="Playfair Display">Playfair Display (serif)</option>
-                <option value="Merriweather">Merriweather (serif)</option>
-                <option value="Lora">Lora (serif)</option>
-                <option value="Cormorant Garamond">Cormorant Garamond (serif)</option>
-                <option value="EB Garamond">EB Garamond (serif)</option>
-                <option value="Libre Baskerville">Libre Baskerville (serif)</option>
-                <option value="Georgia, serif">Georgia (system serif)</option>
-                <option value="Space Grotesk">Space Grotesk (sans)</option>
-                <option value="Montserrat">Montserrat (sans)</option>
-                <option value="Inter">Inter (sans)</option>
-                <option value="Poppins">Poppins (sans)</option>
-                <option value="'Segoe UI', Arial, sans-serif">Segoe UI (system sans)</option>
-                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+              <label>Translation</label>
+              <select id="sel-translation" class="sel">
+                <option>KJV</option>
+                <option>WEB</option>
+                <option>ASV</option>
+                <option>BBE</option>
+                <option>DARBY</option>
+                <option>YLT</option>
+                <option>NKJV</option>
+                <option>NIV</option>
+                <option>ESV</option>
               </select>
+              <span class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px;display:block">NKJV/NIV/ESV use closest free equivalent</span>
             </div>
             <div class="form-row">
-              <label>Weight</label>
-              <select id="sel-font-weight" class="sel">
-                <option value="400">Regular</option>
-                <option value="500" selected>Medium</option>
-                <option value="600">Semibold</option>
-                <option value="700">Bold</option>
-              </select>
-            </div>
-            <div class="form-grid">
-              <div class="form-row">
-                <label>Verse size (%)</label>
-                <div class="stepper">
-                  <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="-1" aria-label="Decrease verse size">−</button>
-                  <input type="number" id="inp-verse-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
-                  <button type="button" class="stepper-btn" data-step-target="inp-verse-size" data-step-dir="1" aria-label="Increase verse size">+</button>
-                </div>
-              </div>
-              <div class="form-row">
-                <label>Reference size (%)</label>
-                <div class="stepper">
-                  <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="-1" aria-label="Decrease reference size">−</button>
-                  <input type="number" id="inp-ref-size" class="inp inp-sm inp-stepper" min="50" max="200" step="5">
-                  <button type="button" class="stepper-btn" data-step-target="inp-ref-size" data-step-dir="1" aria-label="Increase reference size">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-row">
-                <label>Text color</label>
-                <input type="color" id="inp-text-color" class="inp-color" value="#F8FAFC">
-              </div>
-              <div class="form-row">
-                <label>Accent color</label>
-                <input type="color" id="inp-accent-color" class="inp-color" value="#F59E0B">
-              </div>
+              <label>Cooldown (s)</label>
+              <input type="number" id="inp-cooldown" min="1" max="60" class="inp inp-sm">
             </div>
           </div>
+        </div>
 
-          <div class="adv-divider"></div>
-
-          <div class="adv-section">
-            <div class="adv-section-title">Alignment</div>
-            <div class="align-row">
-              <button class="align-btn" id="align-h-left" data-group="h" data-value="left" title="Left">⇤</button>
-              <button class="align-btn align-btn-active" id="align-h-center" data-group="h" data-value="center" title="Center">≡</button>
-              <button class="align-btn" id="align-h-right" data-group="h" data-value="right" title="Right">⇥</button>
-              <span class="align-sep"></span>
-              <button class="align-btn" id="align-v-top" data-group="v" data-value="top" title="Top">⤒</button>
-              <button class="align-btn align-btn-active" id="align-v-middle" data-group="v" data-value="middle" title="Middle">↕</button>
-              <button class="align-btn" id="align-v-bottom" data-group="v" data-value="bottom" title="Bottom">⤓</button>
-            </div>
+        <div class="card">
+          <div class="adv-section-title">🎙️ Transcription</div>
+          <div class="radio-group radio-group-inline">
+            <label class="radio-option radio-option-sm" id="mode-google">
+              <input type="radio" name="transcription-mode" value="google" checked>
+              <span class="radio-custom"></span>
+              <span class="radio-label">Google Speech (free)</span>
+            </label>
+            <label class="radio-option radio-option-sm" id="mode-deepgram">
+              <input type="radio" name="transcription-mode" value="deepgram">
+              <span class="radio-custom"></span>
+              <span class="radio-label">Deepgram</span>
+            </label>
           </div>
-
-        </div>
-      </div>
-
-      <!-- Advanced Settings (collapsible) -->
-      <div class="card card-collapsible" id="card-advanced">
-        <div class="card-header collapsible-header" id="adv-toggle">
-          <span class="card-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-          </span>
-          <span class="card-title">ADVANCED SETTINGS</span>
-          <span class="collapse-arrow" id="adv-arrow">▸</span>
-        </div>
-        <div class="collapsible-body" id="adv-body">
-
-          <!-- Audio Device -->
-          <div class="adv-section">
-            <div class="adv-section-title">🎤 Input Device</div>
-            <div class="form-row">
-              <select id="sel-device" class="sel sel-wide">
-                <option value="-1">Default</option>
-              </select>
+          <div class="form-row" id="deepgram-key-row" style="display:none">
+            <label>Deepgram API key</label>
+            <div class="input-with-btn">
+              <input type="password" id="inp-deepgram-key" class="inp" placeholder="Paste your API key" autocomplete="off">
+              <button id="btn-deepgram-key-toggle" class="btn-ghost-sm" type="button" title="Show/hide key">Show</button>
+              <button id="btn-deepgram-key-test" class="btn-ghost-sm" type="button">Test</button>
             </div>
-            <div id="dev-status" class="dev-status"></div>
+            <p class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:6px">
+              Free at <a href="#" id="link-deepgram-signup">console.deepgram.com</a> — more accurate than the browser's built-in speech recognition, especially for accents and background noise.
+            </p>
+            <div id="deepgram-key-status" class="dev-status" style="margin-top:6px"></div>
           </div>
+        </div>
 
-          <div class="adv-divider"></div>
-
-          <!-- Manual Verse -->
-          <div class="adv-section">
-            <div class="adv-section-title">📖 Send Verse Manually</div>
-            <div class="manual-row">
-              <input type="text" id="inp-manual" placeholder="e.g. John 3:16 · Psalm 23 · next verse" class="inp">
-              <button id="btn-manual-send" class="btn-send">Send →</button>
-            </div>
+        <div class="card">
+          <div class="adv-section-title">🎤 Input Device</div>
+          <div class="form-row">
+            <select id="sel-device" class="sel sel-wide">
+              <option value="-1">Default</option>
+            </select>
           </div>
-
-        </div>
-      </div>
-
-      <!-- Listen Control -->
-      <div class="card" id="card-control">
-        <div id="dg-status-main" class="dg-status-main"></div>
-        <div class="listen-status-row">
-          <div class="pulse-dot" id="pulse-dot"></div>
-          <span id="listen-label">Not listening</span>
-        </div>
-        <div id="waveform-bars" class="waveform-bars"><span></span><span></span><span></span><span></span><span></span></div>
-        <button id="btn-listen" class="btn-listen btn-listen-start">
-          ▶&nbsp;&nbsp;Start Listening
-        </button>
-        <div class="autostart-row">
-          <label class="checkbox-label">
+          <div id="dev-status" class="dev-status"></div>
+          <label class="checkbox-label" style="margin-top:12px">
             <input type="checkbox" id="chk-autostart">
             <span class="checkbox-custom"></span>
             Auto-start on open
           </label>
         </div>
-        <div id="listener-url-row" class="listener-url-row" style="display:none">
-          <span class="listener-url-label">Listener:</span>
-          <a id="listener-url-link" class="listener-url-link" href="#">—</a>
-        </div>
-      </div>
 
-    </aside>
-
-    <!-- VERTICAL DIVIDER -->
-    <div class="layout-divider"></div>
-
-    <!-- MAIN CONTENT -->
-    <main id="main-content">
-
-      <!-- NOW ON SCREEN panel -->
-      <div id="now-on-screen">
-        <div class="verse-glow"></div>
-        <div class="now-header">
-          <span class="now-label">NOW ON SCREEN</span>
-          <span class="now-hints">next · previous · verse 5 · next chapter</span>
-          <button id="btn-fullscreen" class="btn-fullscreen" title="Open live scripture in a new window">⛶ Fullscreen</button>
-          <button id="btn-copy-verse" class="btn-copy-verse" title="Copy verse">⎘</button>
-        </div>
-        <div id="verse-text" class="verse-text">—</div>
-        <div id="verse-ref" class="verse-ref"></div>
-      </div>
-
-      <!-- Log panels -->
-      <div id="log-panels">
-
-        <div class="log-panel" id="panel-transcript">
-          <div class="log-header log-header-blue">
-            <span>🎤&nbsp; Live Transcript</span>
-            <span class="log-header-actions">
-              <span id="tx-count" class="log-count">0</span>
-              <button class="btn-copy-log" data-target="transcript-log" title="Copy all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-              <button class="btn-clear-log" data-target="transcript-log" title="Clear">✕</button>
-            </span>
+        <div class="card">
+          <div class="adv-section-title">Status</div>
+          <div class="status-left" style="margin-bottom:8px">
+            <span id="status-dot" class="status-dot"></span>
+            <span id="status-text">Ready</span>
           </div>
-          <div id="transcript-log" class="log-body"></div>
-        </div>
-
-        <div class="log-panel" id="panel-detection">
-          <div class="log-header log-header-green">
-            <span>📖&nbsp; Scripture Detection</span>
-            <span class="log-header-actions">
-              <span id="dt-count" class="log-count">0</span>
-              <button class="btn-copy-log" data-target="detection-log" title="Copy all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-              <button class="btn-clear-log" data-target="detection-log" title="Clear">✕</button>
-            </span>
-          </div>
-          <div id="detection-log" class="log-body"></div>
-        </div>
-
-      </div>
-
-      <!-- Bottom status bar -->
-      <div id="statusbar">
-        <div class="status-left">
-          <span id="status-dot" class="status-dot"></span>
-          <span id="status-text">Ready</span>
-        </div>
-        <div class="status-right">
           <div class="status-backend" id="status-backend"><span class="backend-dot" id="backend-dot"></span><span id="backend-text">Backend</span></div>
-          <span id="status-version">BibleCue v1.3.15</span>
+          <div style="margin-top:8px"><span id="status-version">BibleCue v1.3.15</span></div>
         </div>
-      </div>
+      </section>
 
-    </main>
+    </div>
   </div>
 
   <div id="toast-container" class="toast-container"></div>
@@ -524,7 +532,8 @@
               This lists every message as JSON. Find yours by <code>"name"</code> and copy the value
               under <code>"id": { "uuid": "..." }</code>.</li>
             <li>Paste the <b>IP</b>, <b>Port</b>, and <b>Message UUID</b> into BibleCue's
-              ProPresenter output and enable it. Test with Advanced Settings → Send Verse Manually.</li>
+              ProPresenter output (Settings → Outputs) and enable it. Test with the manual verse
+              box on the Live Control page.</li>
           </ol>
           <p class="help-note">Both machines must be on the same network. If ProPresenter returns
             an <code>HTTP 404</code> on trigger, the message was likely deleted/recreated since —
@@ -535,7 +544,7 @@
           <h3>EasyWorship</h3>
           <p>EasyWorship doesn't publish a live "push a slide" API the way ProPresenter does, so this
             output writes the verse to a plain text file instead — same mechanism as the generic
-            Text File output below, with its own toggle and default path so it's easy to tell apart.</p>
+            Text File output, with its own toggle and default path so it's easy to tell apart.</p>
           <ol>
             <li><b>Pick a path.</b> Enter any file path in the EasyWorship output's <b>Path</b> field
               (e.g. <code>C:\BibleCue\easyworship_verse.txt</code>). BibleCue creates/overwrites it on
@@ -597,7 +606,7 @@
           <p>Sends the verse as a live 1920×1080 video source over your network — no file bridge,
             no plugin on the receiving side. Give it a <b>Stream Name</b> and enable it; any NDI
             receiver (OBS with the NDI plugin, vMix, NDI Studio Monitor) will see it appear by
-            that name. It's rendered using whatever you set in the <b>Display</b> card — background,
+            that name. It's rendered using whatever you set on the <b>Theme</b> page — background,
             fonts, colors, and alignment all carry over.</p>
           <p class="help-note">Requires the NDI runtime to be installed on this machine. If it's
             missing, the toggle simply does nothing rather than erroring — install NDI Tools from

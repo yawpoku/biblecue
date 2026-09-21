@@ -310,8 +310,21 @@ function connectWS() {{
         if(!running) toggleMic();
       }} else if(d.type==='dg_mode') {{
         dgMode = d.active;
-        if(d.active && !audioProc) {{ if(!running){{running=true;}} startDGAudio(); }}
-        else if(!d.active) {{ stopDGAudio(); }}
+        if(d.active) {{
+          // Switch to Deepgram: stop Google's own recognizer if it was
+          // already running so the two engines never fight over the mic.
+          if(rec) {{ try{{rec.stop();}}catch(e){{}} rec=null; }}
+          if(!running) running=true;
+          startDGAudio();
+        }} else {{
+          // Switch to Google: stop Deepgram's raw audio stream and start
+          // the recognizer if the page was already meant to be listening.
+          stopDGAudio();
+          if(running && !rec) {{
+            rec=buildRec();
+            if(rec) try{{rec.start();}}catch(e){{}}
+          }}
+        }}
       }} else if(d.type==='stop') {{
         if(rec) {{ try{{rec.stop();}}catch(e){{}} rec=null; }} running=false;
         stopDGAudio(); window.close();
@@ -355,11 +368,15 @@ function buildRec() {{
     if(!running||restarting) return;
     restarting=true; restarts++;
     setStatus('Restarting...','#facc15');
+    // Chrome's SpeechRecognition needs a brief moment after onend before it
+    // can be restarted, but every ms here is speech that isn't being
+    // captured — kept as short as still reliably works, with a slower
+    // fallback retry only if the fast restart actually fails.
     setTimeout(function() {{
       if(!running){{restarting=false;return;}}
       rec=buildRec();
       if(rec) try{{rec.start();}}catch(err){{restarting=false;setTimeout(function(){{rec=buildRec();if(rec)try{{rec.start();}}catch(e2){{}}}},1000);}}
-    }},600);
+    }},150);
   }};
   return r;
 }}
@@ -736,9 +753,16 @@ def _words_to_numbers(text):
     }
     one_keys = '|'.join(sorted(ones.keys(), key=len, reverse=True))
     ten_keys = '|'.join(sorted(tens.keys(), key=len, reverse=True))
+    # Single digits only (1-9) — used for "tens + X" compounds below. Teens
+    # (ten-nineteen) are NOT valid there: "thirty seventeen" is not a real
+    # English number the way "thirty seven" is. Without this distinction,
+    # a spoken chapter:verse pair like "Jeremiah thirty seventeen" (meaning
+    # 30:17) gets silently added together into a wrong single chapter (47).
+    single_digit_keys = '|'.join(
+        sorted((k for k, v in ones.items() if 1 <= v <= 9), key=len, reverse=True))
     # Pass 1: hundreds — "one hundred [and] [tens] [ones]"
     pat_h = re.compile(
-        r'\b(' + one_keys + r')\s+hundred(?:\s+and)?(?:\s+(' + ten_keys + r'))?(?:\s+(' + one_keys + r'))?\b'
+        r'\b(' + one_keys + r')\s+hundred(?:\s+and)?(?:\s+(' + ten_keys + r'))?(?:\s+(' + single_digit_keys + r'))?\b'
     )
     def h_replace(m):
         base = ones[m.group(1)] * 100
@@ -746,8 +770,9 @@ def _words_to_numbers(text):
         extra_ones = ones.get(m.group(3) or '', 0)
         return str(base + extra_tens + extra_ones)
     text = pat_h.sub(h_replace, text)
-    # Pass 2: tens + optional ones — "twenty one", "thirty", etc.
-    pat_t = re.compile(r'\b(' + ten_keys + r')(?:\s+(' + one_keys + r'))?\b')
+    # Pass 2: tens + optional single digit — "twenty one", "thirty", etc.
+    # (deliberately excludes teens — see single_digit_keys note above)
+    pat_t = re.compile(r'\b(' + ten_keys + r')(?:\s+(' + single_digit_keys + r'))?\b')
     def t_replace(m):
         return str(tens[m.group(1)] + ones.get(m.group(2) or '', 0))
     text = pat_t.sub(t_replace, text)
@@ -779,15 +804,17 @@ def normalise_spoken(text: str) -> str:
     t = re.sub(r'\b3rd\b', '3', t)
     # Reorder inverted spoken form: "verse N of Book chapter M" → "Book chapter M verse N"
     t = re.sub(
-        r'\bverse\s+(\d+)\s+of\s+([\w][\w ]{1,20}?)\s+(chapter\s+\d+)',
+        r'\bverses?\s+(\d+)\s+of\s+([\w][\w ]{1,20}?)\s+(chapter\s+\d+)',
         r'\2 \3 verse \1', t, flags=re.I)
-    # Strip verse ranges: "verse 12 to 15" → "verse 12", "verse 20-22" → "verse 20"
-    t = re.sub(r'\b(verse\s+\d+)\s*(?:to|through|and|-)\s*\d+\b', r'\1', t, flags=re.I)
-    # "chapter X verse Y" → "X:Y" with flexible connectors
+    # Strip verse ranges: "verse(s) 12 to 15" → "verse 12", "verse 20-22" → "verse 20"
+    # ("verses", plural, is how ranges are almost always spoken — "verses 25
+    # to 26" — so this must match it, not just singular "verse".)
+    t = re.sub(r'\b(verses?\s+\d+)\s*(?:to|through|and|-)\s*\d+\b', r'\1', t, flags=re.I)
+    # "chapter X verse(s) Y" → "X:Y" with flexible connectors
     _cv_conn = r'(?:and\s+|from\s+|in\s+|of\s+|i\s+believe\s+|i\s+think\s+|that\s+is\s+|which\s+is\s+)?'
-    t = re.sub(rf'chapter\s+(\d+)\s+{_cv_conn}verse\s+(\d+)', r'\1:\2', t, flags=re.I)
-    t = re.sub(rf'(\d+)\s+{_cv_conn}verse\s+(\d+)', r'\1:\2', t, flags=re.I)
-    t = re.sub(r'\bverse\s+(\d+)', r':\1', t, flags=re.I)
+    t = re.sub(rf'chapter\s+(\d+)\s+{_cv_conn}verses?\s+(\d+)', r'\1:\2', t, flags=re.I)
+    t = re.sub(rf'(\d+)\s+{_cv_conn}verses?\s+(\d+)', r'\1:\2', t, flags=re.I)
+    t = re.sub(r'\bverses?\s+(\d+)', r':\1', t, flags=re.I)
     t = re.sub(r'\bchapter\s+(\d+)', r' \1', t, flags=re.I)
     # Strip trailing verse ranges after colon-format refs: "3:12 to 15" → "3:12"
     t = re.sub(r'(\d+:\d+)\s*(?:to|through|and|-)\s*\d+', r'\1', t, flags=re.I)
@@ -942,15 +969,24 @@ def _detect_navigation(text: str, cur_book: str, cur_chap: int, cur_verse: int):
             return (cur_book, cur_chap, max(1, cur_verse - 1))
 
     # ── "chapter N verse M" with no book ──────────────────────
+    # Guarded to short utterances only — without this, a long sentence that
+    # happens to contain "chapter 2 verse 16" (e.g. a book name the STT
+    # mangled past recognition, like "Corinthians" heard as "communal")
+    # gets treated as a nav command and jumps to chapter/verse N:M of
+    # whatever book is currently on screen, producing a confident-looking
+    # but wrong reference.
     m2 = re.search(r'\bchapter\s+(\d+)\s+(?:and\s+|from\s+|in\s+)?verse\s+(\d+)\b', t, re.I)
-    if m2 and not has_book:
+    if m2 and not has_book and len(t.split()) <= 8:
         return (cur_book, int(m2.group(1)), int(m2.group(2)))
 
     # ── "verse N" with no book name — same book and chapter ───
+    # Same short-utterance guard as above — "verse 16" turning up inside a
+    # long sentence (a misheard book name, a stray number) is far more
+    # likely to be incidental than an actual "go to verse N" command.
     m = re.search(rf'\bverse\s+({_NAV_NUM_PAT})\b', t, re.I)
     if m:
         remaining = t.replace(m.group(0), '')
-        if not re.search(r'\d+:\d+', remaining) and not has_book:
+        if not re.search(r'\d+:\d+', remaining) and not has_book and len(t.split()) <= 8:
             v = _words_to_num_nav(m.group(1))
             if v > 0:
                 return (cur_book, cur_chap, v)
@@ -961,7 +997,7 @@ def _detect_navigation(text: str, cur_book: str, cur_chap: int, cur_verse: int):
 
     # ── "chapter N" alone — no book, no verse ─────────────────
     m3 = re.search(r'\bchapter\s+(\d+)\b', t, re.I)
-    if m3 and not re.search(r'\bverse\b|\d+:\d+', t) and not has_book:
+    if m3 and not re.search(r'\bverse\b|\d+:\d+', t) and not has_book and len(t.split()) <= 8:
         return (cur_book, int(m3.group(1)), 1)
 
     # ── Book + chapter without verse ──────────────────────────
@@ -1062,11 +1098,11 @@ def _has_verse_number(text: str) -> bool:
     # Explicit colon format: "3:16"
     if re.search(r'\d+:\d+', t):
         return True
-    # "verse N" — digit or spoken word: "verse 16" or "verse sixteen"
-    if re.search(rf'\bverse\s+{num}\b', t):
+    # "verse(s) N" — digit or spoken word: "verse 16" or "verse sixteen"
+    if re.search(rf'\bverses?\s+{num}\b', t):
         return True
-    # "chapter N verse N" — digits or spoken words, optional "and"/"from" between
-    if re.search(rf'\bchapter\s+{num}\b.*?\bverse\s+{num}\b', t):
+    # "chapter N verse(s) N" — digits or spoken words, optional "and"/"from" between
+    if re.search(rf'\bchapter\s+{num}\b.*?\bverses?\s+{num}\b', t):
         return True
     # Two spoken numbers after a book name e.g. "John three sixteen"
     if re.search(rf'\b{num}\s+{num}\b', t):
@@ -1181,7 +1217,7 @@ _GETBIBLE_TRANS = {
     "KJV": "kjv", "NKJV": "kjv",
     "WEB": "web", "NIV": "web",
     "ASV": "asv", "ESV": "asv", "NASB": "asv",
-    "BBE": "bbe", "DARBY": "darby", "YLT": "ylt",
+    "BBE": "basicenglish", "DARBY": "darby", "YLT": "ylt",
 }
 
 # In-memory local Bible: (book_lower, chapter, verse, trans_upper) → (text, ref)
@@ -1251,23 +1287,23 @@ def _download_local_bible(trans_upper: str = "KJV"):
         # Skip if all chapters of this book already downloaded
         if any(k[0] == book_name.lower() and k[3] == trans_upper for k in existing):
             continue
-        url = f"https://getbible.net/v2/{slug}/{book_num}.json"
+        url = f"https://api.getbible.net/v2/{slug}/{book_num}.json"
         try:
             r = requests.get(url, timeout=15)
             if r.status_code != 200:
                 continue
             book_data = r.json()
-            chapters = book_data.get("chapters", {})
+            chapters = book_data.get("chapters", [])
             book_entries = {}
-            for ch_str, ch_data in chapters.items():
+            for ch_data in chapters:
                 try:
-                    ch = int(ch_str)
-                except ValueError:
+                    ch = int(ch_data.get("chapter"))
+                except (TypeError, ValueError):
                     continue
-                for v_str, v_data in ch_data.get("verses", {}).items():
+                for v_data in ch_data.get("verses", []):
                     try:
-                        vnum = int(v_str)
-                    except ValueError:
+                        vnum = int(v_data.get("verse"))
+                    except (TypeError, ValueError):
                         continue
                     vtxt = " ".join(v_data.get("text", "").split())
                     if vtxt:
@@ -1442,14 +1478,18 @@ def fetch_verse(book: str, chapter: int, verse: int, translation: str):
 #  (see HeadlessApp below) — WSServer is used only in tkinter mode.
 # ═══════════════════════════════════════════════════════════════
 class WSServer:
-    def __init__(self, port: int, on_transcript, on_interim=None):
+    def __init__(self, port: int, on_transcript, on_interim=None, on_connect=None):
         self.port = port
         self.on_transcript = on_transcript
         self.on_interim = on_interim or (lambda t: None)
+        self.on_connect = on_connect  # called when the browser listener page connects
         self._thread = None
         self._loop   = None
         self._clients = set()
-        self.autostart = False  # if True, send "start" to browser on connect
+        self.autostart = False  # if True, send a start signal to browser on connect
+        self.dg_mode = False  # True: tell the browser to stream raw audio for
+                               # Deepgram instead of running its own Google
+                               # Web Speech recognition
 
     def set_audio_callback(self, cb):
         self._audio_cb = cb
@@ -1476,10 +1516,19 @@ class WSServer:
     async def _serve(self):
         async def handler(websocket):
             self._clients.add(websocket)
+            if self.on_connect:
+                try:
+                    self.on_connect()
+                except Exception:
+                    pass
             try:
-                # Auto-start mic if listening was already active when browser connected
+                # Auto-start mic if listening was already active when browser
+                # connected — always via dg_mode so a fresh connection lands
+                # directly in the right engine (Google recognition vs raw
+                # Deepgram audio streaming) instead of defaulting to Google
+                # and only switching later, if at all.
                 if self.autostart:
-                    await websocket.send(json.dumps({"type": "start"}))
+                    await websocket.send(json.dumps({"type": "dg_mode", "active": self.dg_mode}))
                 async for message in websocket:
                     try:
                         data = json.loads(message)
@@ -1589,33 +1638,7 @@ class DeepgramListener:
         self.on_status("Stopped")
 
     def _run(self):
-        # Reconnect loop — Deepgram sends 1011 internal error occasionally,
-        # which is a server-side timeout. We just reconnect automatically.
-        while self.running:
-            loop = asyncio.new_event_loop()
-            try:
-                loop.run_until_complete(self._stream(loop))
-            except Exception as e:
-                if self.running:
-                    self.on_status(f"Error: {str(e)[:50]}")
-                    time.sleep(2)
-            finally:
-                try: loop.close()
-                except Exception: pass
-            if self.running:
-                self.on_status("Reconnecting...")
-                time.sleep(1.5)
-
-    async def _stream(self, loop):
         import sounddevice as _sd
-        url = (
-            "wss://api.deepgram.com/v1/listen"
-            "?model=nova-2&language=en-US&punctuate=true"
-            "&interim_results=true&endpointing=300"
-            "&smart_format=true&utterance_end_ms=1000"
-        )
-        # websockets 16.0 requires a list of tuples, not a dict
-        auth = [("Authorization", f"Token {self.key}")]
 
         def audio_cb(indata, frames, time_info, status):
             if self.running:
@@ -1625,10 +1648,53 @@ class DeepgramListener:
         # Use specific device if provided, else default
         dev = self.device_id if self.device_id >= 0 else None
 
+        # The mic capture stream stays open across reconnects — only the
+        # Deepgram WebSocket itself is torn down and rebuilt. Otherwise every
+        # reconnect (Deepgram sends a 1011 timeout every few minutes) briefly
+        # stopped the mic too, silently dropping whatever was said during the
+        # gap. Audio keeps queuing in self._audio_q while offline and is sent
+        # as soon as the new connection is up.
         stream = _sd.RawInputStream(
             device=dev,
             samplerate=self.fs, channels=1, dtype="int16",
             blocksize=int(self.fs * 0.1), callback=audio_cb)
+        stream.start()
+        try:
+            # Reconnect loop — Deepgram sends 1011 internal error occasionally,
+            # which is a server-side timeout. We just reconnect automatically.
+            while self.running:
+                loop = asyncio.new_event_loop()
+                try:
+                    loop.run_until_complete(self._stream(loop))
+                except Exception as e:
+                    if self.running:
+                        self.on_status(f"Error: {str(e)[:50]}")
+                        time.sleep(2)
+                finally:
+                    try: loop.close()
+                    except Exception: pass
+                if self.running:
+                    self.on_status("Reconnecting...")
+                    time.sleep(1.5)
+        finally:
+            try: stream.stop(); stream.close()
+            except Exception: pass
+
+    async def _stream(self, loop):
+        url = (
+            "wss://api.deepgram.com/v1/listen"
+            "?model=nova-2&language=en-US&punctuate=true"
+            "&interim_results=true&endpointing=300"
+            "&smart_format=true&utterance_end_ms=1000"
+            # Required for raw, headerless PCM: without these, Deepgram
+            # accepts the connection and the audio silently, but never
+            # returns any transcription results at all — no error, just
+            # permanent silence, since it doesn't know how to decode the
+            # byte stream we're sending (int16 mono at self.fs).
+            f"&encoding=linear16&sample_rate={self.fs}&channels=1"
+        )
+        # websockets 16.0 requires a list of tuples, not a dict
+        auth = [("Authorization", f"Token {self.key}")]
 
         self.on_status("Connecting...")
         ws = None
@@ -1637,7 +1703,6 @@ class DeepgramListener:
             ws = await websockets.connect(url, additional_headers=auth)
 
             self.on_status("Live - real-time")
-            stream.start()
 
             async def sender():
                 while self.running:
@@ -1699,8 +1764,6 @@ class DeepgramListener:
             else:
                 self.on_status(f"Error: {msg[:50]}")
         finally:
-            try: stream.stop(); stream.close()
-            except Exception: pass
             if ws:
                 try: await ws.close()
                 except Exception: pass
@@ -2620,6 +2683,7 @@ class HeadlessApp:
         self._browser_opened = False   # only open browser once per session
         self._listener_url  = None    # http://127.0.0.1:<port> for Google Speech
         self._fetch_q       = queue.Queue()
+        self._detect_q      = queue.Queue()
         self._fired_lock    = threading.Lock()
         self.last_fired     = {}
         self._last_nav_time: float = 0.0
@@ -2634,6 +2698,10 @@ class HeadlessApp:
 
         # Start fetch worker thread
         threading.Thread(target=self._fetch_worker, daemon=True).start()
+        # Start detect worker thread — keeps parse_scripture()/_autocorrect_books()
+        # off the Deepgram asyncio loop, which must stay free to forward live mic
+        # audio in real time (see _detect_worker docstring).
+        threading.Thread(target=self._detect_worker, daemon=True).start()
 
         # Start the browser transcript WS server (for Google Speech browser page)
         self._start_browser_ws()
@@ -2683,7 +2751,9 @@ class HeadlessApp:
         ws_port = int(self.settings.get("ws_port", 8765))
         # Use a different port for the browser server to avoid conflict with control server
         browser_port = ws_port + 2  # e.g. 8767
-        self._browser_ws = WSServer(browser_port, self._on_transcript, self._on_interim)
+        self._browser_ws = WSServer(
+            browser_port, self._on_transcript, self._on_interim,
+            on_connect=lambda: self.broadcast({"type": "listener_connected"}))
         self._browser_ws.start()
         html = get_listener_html(self._browser_ws.port)
         self._http_port = start_http_server(html, 8766)
@@ -2773,6 +2843,36 @@ class HeadlessApp:
             self._browser_opened = True
             self._logd(f"Browser opened → click the mic button there")
 
+        elif t == "test_deepgram_key":
+            key = msg.get("key", "").strip()
+            if not key:
+                await websocket.send(json.dumps(
+                    {"type": "deepgram_key_test_result", "ok": False, "message": "Enter a key first."}))
+            else:
+                ok, message = await self._test_deepgram_key(key)
+                await websocket.send(json.dumps(
+                    {"type": "deepgram_key_test_result", "ok": ok, "message": message}))
+
+    async def _test_deepgram_key(self, key: str):
+        """Open (and immediately close) a real Deepgram connection to verify
+        the key works, without needing to stream any audio."""
+        url = "wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US"
+        auth = [("Authorization", f"Token {key}")]
+        try:
+            ws = await asyncio.wait_for(
+                websockets.connect(url, additional_headers=auth), timeout=6)
+            await ws.close()
+            return True, "Key works — connected to Deepgram successfully."
+        except asyncio.TimeoutError:
+            return False, "Connection timed out — check your internet connection."
+        except Exception as e:
+            msg = str(e)
+            if "401" in msg or "403" in msg:
+                return False, "Invalid API key — check console.deepgram.com."
+            if "404" in msg:
+                return False, "Endpoint not found — check your Deepgram plan."
+            return False, f"Connection failed: {msg[:80]}"
+
     # ── ELECTRON WS SERVER ──────────────────────────────────────
     async def _electron_serve(self):
         port = int(self.settings.get("ws_port", 8765))
@@ -2824,12 +2924,19 @@ class HeadlessApp:
             mode = "google"
         self._stop_all_listeners()
 
+        if hasattr(self, '_browser_ws') and self._browser_ws:
+            self._browser_ws.dg_mode = (mode == "deepgram")
+
         if mode == "google":
             self._logd("--- Google Speech mode ---")
             self._logd("Uses Chrome/Edge browser microphone.")
             url = f"http://127.0.0.1:{self._http_port or 8766}"
             if hasattr(self, '_browser_ws') and self._browser_ws:
                 self._browser_ws.autostart = True
+                # Wakes an already-open listener tab that was left in
+                # Deepgram mode (from before switching settings) back into
+                # normal Google recognition — a no-op if nothing is open yet.
+                self._browser_ws.broadcast({"type": "dg_mode", "active": False})
             # Frontend opens the browser via shell.openExternal on this message
             self.broadcast({"type": "open_browser_url", "url": url})
             if not self._browser_opened:
@@ -2850,16 +2957,15 @@ class HeadlessApp:
                 key, self._on_transcript, self._set_dg_status,
                 on_interim=self._on_interim,
                 device_id=int(self.settings.get("audio_device", -1)))
-            if hasattr(self, '_browser_ws') and self._browser_ws:
-                dg = self._deepgram
-                self._browser_ws.set_audio_callback(
-                    lambda chunk: dg._audio_q.put_nowait(chunk)
-                    if dg and dg.running else None)
             self._deepgram.start()
-            if not self._browser_opened:
-                url = f"http://127.0.0.1:{self._http_port or 8766}"
-                self.broadcast({"type": "open_browser_url", "url": url})
-                self._browser_opened = True
+            self._logd("Uses this computer's microphone directly — no browser tab needed.")
+            if hasattr(self, '_browser_ws') and self._browser_ws:
+                # Deepgram captures audio directly (sounddevice), not through
+                # the browser, so there's no need to open a tab for it. But if
+                # one is already open from a previous Google-mode session,
+                # tell it to stop running Google's recognizer in the
+                # background instead of leaving it silently active.
+                self._browser_ws.broadcast({"type": "dg_mode", "active": True})
 
     def _stop_all_listeners(self):
         if self._deepgram:
@@ -2875,6 +2981,32 @@ class HeadlessApp:
         if not self._listening:
             return
         self.broadcast({"type": "transcript", "text": f">> {text}", "interim": True})
+        # Detection is queued, not run here — this callback fires from inside
+        # DeepgramListener's asyncio loop, the same loop that forwards live mic
+        # audio to Deepgram in real time. Running parse_scripture() /
+        # _autocorrect_books() inline would block that loop and delay audio
+        # delivery, degrading Deepgram's own transcription quality.
+        self._detect_q.put(("interim", text))
+
+    def _on_transcript(self, text: str):
+        if not self._listening:
+            return
+        self.broadcast({"type": "transcript", "text": text, "interim": False})
+        self._detect_q.put(("final", text))
+
+    def _detect_worker(self):
+        """Persistent worker — runs scripture detection off the audio thread."""
+        while True:
+            kind, text = self._detect_q.get()
+            try:
+                if kind == "interim":
+                    self._do_interim_detect(text)
+                else:
+                    self._do_transcript_detect(text)
+            except Exception:
+                pass
+
+    def _do_interim_detect(self, text: str):
         # ── Fast-path nav on interim ─────────────────────────
         if _FAST_NAV_RE.search(text):
             with self._cur_lock:
@@ -2896,17 +3028,13 @@ class HeadlessApp:
             ch = int(m_early.group(2))
             trans = self.settings.get("translation", "KJV")
             _prefetch_chapter(bk, ch, trans)
-        if _has_verse_number(_corrected):
-            refs = parse_scripture(_corrected)
-            if refs:
-                self._interim_detected_ref  = refs[0]
-                self._interim_detected_time = time.time()
-                self._process_refs(refs[:1])
+        refs = parse_scripture(_corrected)
+        if refs:
+            self._interim_detected_ref  = refs[0]
+            self._interim_detected_time = time.time()
+            self._process_refs(refs[:1])
 
-    def _on_transcript(self, text: str):
-        if not self._listening:
-            return
-        self.broadcast({"type": "transcript", "text": text, "interim": False})
+    def _do_transcript_detect(self, text: str):
         with self._cur_lock:
             cb, cc, cv = self._cur_book, self._cur_chap, self._cur_verse
         nav_ref = _detect_navigation(text, cb, cc, cv)
@@ -2921,16 +3049,15 @@ class HeadlessApp:
         self._last_final_text = text
         for candidate in ([text] if not prev else [text, prev + " " + text]):
             _corrected = _autocorrect_books(candidate)
-            if _has_verse_number(_corrected):
-                refs = parse_scripture(_corrected)
-                if refs:
-                    interim_ref  = self._interim_detected_ref
-                    interim_age  = time.time() - self._interim_detected_time
-                    self._interim_detected_ref = None
-                    if refs[0] == interim_ref and interim_age < 5.0:
-                        return
-                    self._process_refs(refs[:1])
+            refs = parse_scripture(_corrected)
+            if refs:
+                interim_ref  = self._interim_detected_ref
+                interim_age  = time.time() - self._interim_detected_time
+                self._interim_detected_ref = None
+                if refs[0] == interim_ref and interim_age < 5.0:
                     return
+                self._process_refs(refs[:1])
+                return
         self._interim_detected_ref = None
 
     # ── VERSE PROCESSING ────────────────────────────────────────

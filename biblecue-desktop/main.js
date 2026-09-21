@@ -277,7 +277,6 @@ function attachContextMenu (webContents) {
 // ---------------------------------------------------------------------------
 function buildAppMenu () {
   const isMac = process.platform === 'darwin'
-  const SETUP_GUIDE_URL = 'https://claude.ai/code/artifact/049238da-f9c3-4f7b-89c2-7f2a8e00ad05'
 
   const template = [
     ...(isMac ? [{
@@ -340,7 +339,7 @@ function buildAppMenu () {
     {
       role: 'help',
       submenu: [
-        { label: 'Setup Guide', click: () => shell.openExternal(SETUP_GUIDE_URL) },
+        { label: 'Setup Guide', click: () => mainWindow?.webContents.send('open-setup-guide-modal') },
         { label: 'Report an Issue', click: () => shell.openExternal('https://github.com/yawpoku/biblecue/issues') },
         { label: 'View on GitHub', click: () => shell.openExternal('https://github.com/yawpoku/biblecue') },
         { type: 'separator' },

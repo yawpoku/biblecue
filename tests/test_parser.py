@@ -70,9 +70,20 @@ def test_local_bible_load_missing_file_is_graceful():
 
 
 def test_fetch_verse_served_from_cache_without_network():
-    from biblecue import fetch_verse, _VERSE_CACHE
-    _VERSE_CACHE[("john", 3, 16, "KJV")] = (
-        "For God so loved the world", "John 3:16")
-    text, ref = fetch_verse("John", 3, 16, "KJV")
-    assert text == "For God so loved the world"
-    assert ref == "John 3:16"
+    from biblecue import fetch_verse, _VERSE_CACHE, _LOCAL_BIBLE, _local_bible_lock
+    # fetch_verse checks the local Bible before the session cache, so isolate
+    # this test from any real bible_local/*.json a full app run may have
+    # downloaded into the working directory.
+    key = ("john", 3, 16, "KJV")
+    with _local_bible_lock:
+        had_local = key in _LOCAL_BIBLE
+        saved_local = _LOCAL_BIBLE.pop(key, None)
+    _VERSE_CACHE[key] = ("For God so loved the world", "John 3:16")
+    try:
+        text, ref = fetch_verse("John", 3, 16, "KJV")
+        assert text == "For God so loved the world"
+        assert ref == "John 3:16"
+    finally:
+        if had_local:
+            with _local_bible_lock:
+                _LOCAL_BIBLE[key] = saved_local

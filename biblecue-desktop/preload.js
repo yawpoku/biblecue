@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onPythonCrashed: (cb) => ipcRenderer.on('python-crashed', cb),
   platform: process.platform,
   openFullscreen: () => ipcRenderer.invoke('open-fullscreen'),
+  onOpenSetupGuide: (cb) => ipcRenderer.on('open-setup-guide-modal', cb),
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
   getWsPort: () => ipcRenderer.invoke('get-ws-port'),
   reloadWindow: () => ipcRenderer.invoke('reload-window'),

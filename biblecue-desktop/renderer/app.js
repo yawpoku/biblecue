@@ -42,12 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
     inpCooldown:      document.getElementById('inp-cooldown'),
     selDevice:        document.getElementById('sel-device'),
     chkAutostart:     document.getElementById('chk-autostart'),
-    saveIndicator:    document.getElementById('save-indicator'),
 
-    // Outputs card
-    outToggle:          document.getElementById('outputs-toggle'),
-    outBody:            document.getElementById('outputs-body'),
-    outArrow:           document.getElementById('outputs-arrow'),
+    // Transcription mode
+    modeRadios:          document.querySelectorAll('input[name="transcription-mode"]'),
+    deepgramKeyRow:      document.getElementById('deepgram-key-row'),
+    inpDeepgramKey:      document.getElementById('inp-deepgram-key'),
+    btnDeepgramKeyToggle:document.getElementById('btn-deepgram-key-toggle'),
+    btnDeepgramKeyTest:  document.getElementById('btn-deepgram-key-test'),
+    deepgramKeyStatus:   document.getElementById('deepgram-key-status'),
+    linkDeepgramSignup:  document.getElementById('link-deepgram-signup'),
+
+    // Outputs page
     outPpEnabled:       document.getElementById('out-pp-enabled'),
     outPpIp:            document.getElementById('out-pp-ip'),
     outPpPort:          document.getElementById('out-pp-port'),
@@ -70,10 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     outNdiEnabled:      document.getElementById('out-ndi-enabled'),
     outNdiName:         document.getElementById('out-ndi-name'),
 
-    // Display card
-    displayToggle:    document.getElementById('display-toggle'),
-    displayBody:      document.getElementById('display-body'),
-    displayArrow:     document.getElementById('display-arrow'),
+    // Display page
     bgTypeRadios:     document.querySelectorAll('input[name="bg-type"]'),
     bgColorRow:       document.getElementById('bg-color-row'),
     bgImageRow:       document.getElementById('bg-image-row'),
@@ -91,11 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     alignBtns:        document.querySelectorAll('.align-btn'),
     stepperBtns:      document.querySelectorAll('.stepper-btn'),
 
-    // Advanced settings
-    advToggle:        document.getElementById('adv-toggle'),
-    advBody:          document.getElementById('adv-body'),
-    advArrow:         document.getElementById('adv-arrow'),
-
     // Manual verse
     btnManualSend:    document.getElementById('btn-manual-send'),
     inpManual:        document.getElementById('inp-manual'),
@@ -104,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnMinimize:      document.getElementById('btn-minimize'),
     btnMaximize:      document.getElementById('btn-maximize'),
     btnClose:         document.getElementById('btn-close'),
-    btnTheme:         document.getElementById('btn-theme'),
 
     // Help / setup guide
     btnHelp:          document.getElementById('btn-help'),
@@ -114,6 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Log panel buttons
     clearLogBtns:     document.querySelectorAll('.btn-clear-log'),
     copyLogBtns:      document.querySelectorAll('.btn-copy-log'),
+
+    // Rail nav / pages
+    railBtns:         document.querySelectorAll('.rail-btn'),
+    pages:            document.querySelectorAll('.page'),
+
+    // Live canvas on-air indicator
+    onAirLabel:       document.getElementById('on-air-label'),
   };
 
   // ===========================================================================
@@ -127,8 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let isListening = false;
   let autoStartPending = false;
-  let saveIndicatorTimer = null;
-  let advBodyOpen = false;
+  let listenerConnectWatchdog = null;
 
   // For interim transcript line replacement
   let lastEntryWasInterim = false;
@@ -316,6 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dom.listenLabel.style.color = active ? 'var(--color-green, #4caf50)' : 'var(--color-muted, #888)';
     }
 
+    if (dom.onAirLabel) dom.onAirLabel.textContent = active ? 'ON AIR' : 'OFF AIR';
+
     if (!active) {
       const urlRow = document.getElementById('listener-url-row');
       if (urlRow) urlRow.style.display = 'none';
@@ -355,6 +359,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setVal(dom.selTranslation,  data.translation);
     setVal(dom.inpCooldown,     data.cooldown_secs);
     setChk(dom.chkAutostart,    data.autostart);
+
+    const mode = data.mode === 'deepgram' ? 'deepgram' : 'google';
+    dom.modeRadios.forEach(r => { r.checked = (r.value === mode); });
+    if (dom.inpDeepgramKey) dom.inpDeepgramKey.value = data.deepgram_key || '';
+    if (dom.deepgramKeyRow) dom.deepgramKeyRow.style.display = mode === 'deepgram' ? '' : 'none';
 
     // Auto-start on load if configured
     if (data.autostart && !autoStartPending) {
@@ -439,6 +448,49 @@ document.addEventListener('DOMContentLoaded', () => {
     displayState.align_h = display.align_h || 'center';
     displayState.align_v = display.align_v || 'middle';
     setAlignButtons();
+    updateThemePreview();
+  }
+
+  /** Live-reflects the Theme form fields onto the small preview canvas. */
+  function updateThemePreview() {
+    const preview = document.getElementById('theme-preview');
+    const inner   = document.getElementById('theme-preview-inner');
+    const pText   = document.getElementById('theme-preview-text');
+    const pRef    = document.getElementById('theme-preview-ref');
+    if (!preview || !inner || !pText || !pRef) return;
+
+    const bgTypeEl = document.querySelector('input[name="bg-type"]:checked');
+    const bgType = bgTypeEl ? bgTypeEl.value : 'color';
+    if (bgType === 'image' && displayState.bg_image) {
+      preview.style.backgroundImage = `url("${displayState.bg_image}")`;
+      preview.style.backgroundColor = '';
+    } else {
+      preview.style.backgroundImage = '';
+      preview.style.backgroundColor = dom.inpBgColor ? dom.inpBgColor.value : '#191919';
+    }
+
+    const font   = dom.selFontFamily ? dom.selFontFamily.value : 'Playfair Display';
+    const weight = dom.selFontWeight ? dom.selFontWeight.value : '500';
+    const verseSize = dom.inpVerseSize ? Number(dom.inpVerseSize.value) || 100 : 100;
+    const refSize   = dom.inpRefSize   ? Number(dom.inpRefSize.value)   || 100 : 100;
+    const textColor   = dom.inpTextColor   ? dom.inpTextColor.value   : '#F8FAFC';
+    const accentColor = dom.inpAccentColor ? dom.inpAccentColor.value : '#F59E0B';
+
+    pText.style.fontFamily = font;
+    pText.style.fontWeight = weight;
+    pText.style.color = textColor;
+    pRef.style.fontFamily = font;
+    pRef.style.color = accentColor;
+    // Font sizes are driven by CSS (clamp(...) * these vars) so the preview
+    // scales with the box itself, matching fullscreen.html's --verse-scale.
+    preview.style.setProperty('--verse-scale', String(Math.max(0.3, verseSize / 100)));
+    preview.style.setProperty('--ref-scale', String(Math.max(0.3, refSize / 100)));
+
+    const hAlign = displayState.align_h === 'left' ? 'flex-start' : displayState.align_h === 'right' ? 'flex-end' : 'center';
+    const vAlign = displayState.align_v === 'top' ? 'flex-start' : displayState.align_v === 'bottom' ? 'flex-end' : 'center';
+    inner.style.alignItems = hAlign;
+    inner.style.justifyContent = vAlign;
+    inner.style.textAlign = displayState.align_h;
   }
 
   /** Reflects displayState.align_h/align_v onto the alignment button group. */
@@ -533,12 +585,14 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {object}
    */
   function collectSettings() {
+    const checkedMode = document.querySelector('input[name="transcription-mode"]:checked');
     return {
       translation:   dom.selTranslation ? dom.selTranslation.value          : 'KJV',
       cooldown_secs: dom.inpCooldown    ? Number(dom.inpCooldown.value)     : 8,
       audio_device:  dom.selDevice      ? Number(dom.selDevice.value)       : -1,
       autostart:     dom.chkAutostart   ? dom.chkAutostart.checked          : false,
-      mode:          'google',  // the only mode now — see index.html for why there's no picker
+      mode:          checkedMode ? checkedMode.value : 'google',
+      deepgram_key:  dom.inpDeepgramKey ? dom.inpDeepgramKey.value.trim()   : '',
       outputs:       collectOutputs(),
       display:       collectDisplay(),
     };
@@ -583,17 +637,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Show the "✓ Saved" indicator briefly.
+   * Show the "✓ Saved" toast.
    */
   function showSaveIndicator() {
     showToast('Settings saved', 'success', 2000);
-    // Also keep the original indicator for backward compat
-    if (!dom.saveIndicator) return;
-    clearTimeout(saveIndicatorTimer);
-    dom.saveIndicator.classList.add('visible');
-    saveIndicatorTimer = setTimeout(() => {
-      dom.saveIndicator.classList.remove('visible');
-    }, 2500);
   }
 
   // Debounced version for input changes
@@ -663,6 +710,15 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
       }
 
+      case 'deepgram_key_test_result': {
+        if (dom.btnDeepgramKeyTest) dom.btnDeepgramKeyTest.disabled = false;
+        if (dom.deepgramKeyStatus) {
+          dom.deepgramKeyStatus.textContent = msg.message || (msg.ok ? 'Key works.' : 'Test failed.');
+          dom.deepgramKeyStatus.style.color = msg.ok ? 'var(--green)' : 'var(--red)';
+        }
+        break;
+      }
+
       case 'settings_response': {
         populateSettings(msg.data);
         break;
@@ -679,10 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       case 'python-crashed': {
-        const backendDot  = document.getElementById('backend-dot');
-        const backendText = document.getElementById('backend-text');
-        if (backendDot)  backendDot.classList.remove('active');
-        if (backendText) backendText.textContent = 'Backend Offline';
+        setConnectionState(false);
         appendLog('detection-log', '[ERROR] Python backend crashed');
         showToast('Backend process crashed', 'error', 4000);
         break;
@@ -728,6 +781,25 @@ document.addEventListener('DOMContentLoaded', () => {
           };
           urlRow.style.display = 'flex';
         }
+        // We have no way to confirm the OS actually opened a browser tab —
+        // shell.openExternal is fire-and-forget. So arm a watchdog: if the
+        // listener page hasn't connected back within a few seconds, surface
+        // an actionable toast instead of leaving the user to guess why
+        // nothing is being detected.
+        if (listenerConnectWatchdog) clearTimeout(listenerConnectWatchdog);
+        listenerConnectWatchdog = setTimeout(() => {
+          listenerConnectWatchdog = null;
+          showToast('Browser mic didn\'t open — click the listener link below to open it manually', 'error', 6000);
+        }, 6000);
+        break;
+      }
+
+      case 'listener_connected': {
+        // The browser listener page connected — cancel the "didn't open" nudge.
+        if (listenerConnectWatchdog) {
+          clearTimeout(listenerConnectWatchdog);
+          listenerConnectWatchdog = null;
+        }
         break;
       }
 
@@ -739,6 +811,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===========================================================================
   // SECTION 12: WebSocket — Connection Manager
   // ===========================================================================
+
+  /**
+   * Reflects backend connection state onto the Settings page's backend pill.
+   * @param {boolean} connected
+   */
+  function setConnectionState(connected) {
+    const backendDot  = document.getElementById('backend-dot');
+    const backendText = document.getElementById('backend-text');
+    if (backendDot)  backendDot.classList.toggle('active', connected);
+    if (backendText) backendText.textContent = connected ? 'Backend Online' : 'Backend Offline';
+  }
 
   /**
    * Open a WebSocket connection to the Python backend.
@@ -770,11 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
       wsRetryDelay = 1000; // reset backoff
       setStatus('Connected to backend', 'green');
       appendLog('detection-log', '[WS] Connected to backend');
-
-      const backendDot  = document.getElementById('backend-dot');
-      const backendText = document.getElementById('backend-text');
-      if (backendDot)  backendDot.classList.add('active');
-      if (backendText) backendText.textContent = 'Backend Online';
+      setConnectionState(true);
 
       // Request initial state
       send({ type: 'get_settings' });
@@ -794,11 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('[WCI] WebSocket closed:', event.code, event.reason);
       setStatus('Reconnecting...', 'red');
       setListeningState(false);
-
-      const backendDot  = document.getElementById('backend-dot');
-      const backendText = document.getElementById('backend-text');
-      if (backendDot)  backendDot.classList.remove('active');
-      if (backendText) backendText.textContent = 'Backend Offline';
+      setConnectionState(false);
 
       scheduleReconnect();
     };
@@ -843,6 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.inpCooldown,
     dom.selDevice,
     dom.chkAutostart,
+    dom.inpDeepgramKey,
     dom.outPpIp, dom.outPpPort, dom.outPpUuid,
     dom.outEwPath,
     dom.outWebhookUrl, dom.outFilePath,
@@ -853,11 +929,24 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.inpVerseSize, dom.inpRefSize, dom.inpTextColor, dom.inpAccentColor,
   ].filter(Boolean);
 
+  const themePreviewFields = [
+    dom.inpBgColor, dom.selFontFamily, dom.selFontWeight,
+    dom.inpVerseSize, dom.inpRefSize, dom.inpTextColor, dom.inpAccentColor,
+  ].filter(Boolean);
+
   settingsInputs.forEach(el => {
     const eventType = (el.type === 'checkbox' || el.tagName === 'SELECT' || el.type === 'color') ? 'change' : 'input';
     el.addEventListener(eventType, debouncedSave);
     if (el === dom.inpVerseSize || el === dom.inpRefSize) {
       el.addEventListener('input', () => updateStepperBounds(el));
+    }
+    if (themePreviewFields.includes(el)) {
+      // Always use 'input' for the live preview, even on fields (color,
+      // select) whose debounced-save listener uses 'change' — 'input' fires
+      // continuously while dragging a color picker, 'change' only once it
+      // closes, so 'change' alone made the preview look frozen mid-drag.
+      el.addEventListener('input', updateThemePreview);
+      el.addEventListener('change', updateThemePreview);
     }
   });
 
@@ -875,9 +964,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dom.bgColorRow) dom.bgColorRow.style.display = radio.value === 'color' ? '' : 'none';
         if (dom.bgImageRow) dom.bgImageRow.style.display = radio.value === 'image' ? '' : 'none';
       }
-      if (radio.checked) saveSettings();
+      if (radio.checked) { saveSettings(); updateThemePreview(); }
     });
   });
+
+  // Transcription mode (Google Speech / Deepgram) — immediate save, toggles the key row
+  dom.modeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (!radio.checked) return;
+      if (dom.deepgramKeyRow) dom.deepgramKeyRow.style.display = radio.value === 'deepgram' ? '' : 'none';
+      if (dom.deepgramKeyStatus) dom.deepgramKeyStatus.textContent = '';
+      saveSettings();
+    });
+  });
+
+  // Show/hide the Deepgram API key
+  if (dom.btnDeepgramKeyToggle && dom.inpDeepgramKey) {
+    dom.btnDeepgramKeyToggle.addEventListener('click', () => {
+      const showing = dom.inpDeepgramKey.type === 'text';
+      dom.inpDeepgramKey.type = showing ? 'password' : 'text';
+      dom.btnDeepgramKeyToggle.textContent = showing ? 'Show' : 'Hide';
+    });
+  }
+
+  // Sign-up link
+  if (dom.linkDeepgramSignup) {
+    dom.linkDeepgramSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.electronAPI?.openExternalUrl('https://console.deepgram.com/signup');
+    });
+  }
+
+  // Test the Deepgram key against the real API before relying on it live
+  if (dom.btnDeepgramKeyTest) {
+    dom.btnDeepgramKeyTest.addEventListener('click', () => {
+      const key = dom.inpDeepgramKey ? dom.inpDeepgramKey.value.trim() : '';
+      if (!dom.deepgramKeyStatus) return;
+      if (!key) {
+        dom.deepgramKeyStatus.textContent = 'Enter a key first.';
+        dom.deepgramKeyStatus.style.color = 'var(--red)';
+        return;
+      }
+      dom.deepgramKeyStatus.textContent = 'Testing…';
+      dom.deepgramKeyStatus.style.color = 'var(--fg-2)';
+      dom.btnDeepgramKeyTest.disabled = true;
+      send({ type: 'test_deepgram_key', key });
+    });
+  }
 
   // Alignment buttons — immediate save
   dom.alignBtns.forEach(btn => {
@@ -886,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
       displayState[group] = btn.dataset.value;
       setAlignButtons();
       saveSettings();
+      updateThemePreview();
     });
   });
 
@@ -922,6 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayState.bg_image = reader.result;
         renderBgImagePreview();
         saveSettings();
+        updateThemePreview();
       };
       reader.onerror = () => showToast('Could not read that image', 'error');
       reader.readAsDataURL(file);
@@ -933,84 +1068,55 @@ document.addEventListener('DOMContentLoaded', () => {
       displayState.bg_image = '';
       renderBgImagePreview();
       saveSettings();
+      updateThemePreview();
     });
   }
 
   // ===========================================================================
-  // SECTION 15: Advanced Settings Collapsible
+  // SECTION 15: Output Plugin Row Expand/Collapse
   // ===========================================================================
+  // Outputs/Display/Settings are now full pages behind the rail nav rather
+  // than collapsible sidebar cards, so only each individual output row's
+  // own config detail still needs an expand/collapse toggle.
 
-  // Collapsible bodies animate via an inline max-height measured from the
-  // element's real scrollHeight, not a fixed CSS cap. A fixed cap has to be
-  // either too small (clips real content — the Outputs card has 6 rows,
-  // each with its own expandable fields) or way oversized "to be safe",
-  // and an oversized max-height transitioning inside a scrollable ancestor
-  // (#sidebar) causes the browser's scroll-anchoring to jump the scroll
-  // position unpredictably — e.g. the Transcription Mode card at the top
-  // scrolling out of reach. Measuring the exact height sidesteps both.
-  function openCollapsible (body, arrow) {
-    body.classList.add('open');
-    if (arrow) arrow.classList.add('open');
-    body.style.maxHeight = body.scrollHeight + 'px';
-  }
-  function closeCollapsible (body, arrow) {
-    // Pin the current rendered height first so there's a real starting
-    // point for the transition, then collapse on the next frame.
-    body.style.maxHeight = body.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      body.classList.remove('open');
-      if (arrow) arrow.classList.remove('open');
-      body.style.maxHeight = '0px';
-    });
-  }
-  // Re-measure an already-open body after its own content changes height
-  // (e.g. expanding a nested output's config fields) so newly revealed
-  // content isn't clipped by the old max-height value.
-  function refreshCollapsible (body) {
-    if (body && body.classList.contains('open')) {
-      body.style.maxHeight = body.scrollHeight + 'px';
-    }
-  }
-
-  if (dom.advToggle && dom.advBody) {
-    dom.advToggle.addEventListener('click', () => {
-      advBodyOpen = !advBodyOpen;
-      if (advBodyOpen) openCollapsible(dom.advBody, dom.advArrow);
-      else closeCollapsible(dom.advBody, dom.advArrow);
-    });
-  }
-
-  let outBodyOpen = false;
-  if (dom.outToggle && dom.outBody) {
-    dom.outToggle.addEventListener('click', () => {
-      outBodyOpen = !outBodyOpen;
-      if (outBodyOpen) openCollapsible(dom.outBody, dom.outArrow);
-      else closeCollapsible(dom.outBody, dom.outArrow);
-    });
-  }
-
-  let displayBodyOpen = false;
-  if (dom.displayToggle && dom.displayBody) {
-    dom.displayToggle.addEventListener('click', () => {
-      displayBodyOpen = !displayBodyOpen;
-      if (displayBodyOpen) openCollapsible(dom.displayBody, dom.displayArrow);
-      else closeCollapsible(dom.displayBody, dom.displayArrow);
-    });
-  }
-
-  // Output plugin expand buttons
   document.querySelectorAll('.output-expand-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    const header = btn.closest('.output-plugin-header');
+    if (!header) return;
+    const toggle = () => {
       const targetId = btn.dataset.target;
       const cfg = document.getElementById(targetId);
       if (cfg) {
         cfg.classList.toggle('open');
         btn.classList.toggle('open');
-        refreshCollapsible(dom.outBody);
       }
+    };
+    // The whole row is clickable, not just the tiny arrow at the far
+    // right — but clicking the checkbox/label should only toggle that
+    // output, not also expand/collapse the row.
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.checkbox-label')) return;
+      toggle();
     });
   });
 
+
+  // ===========================================================================
+  // SECTION 16: Rail Navigation / Pages
+  // ===========================================================================
+
+  /**
+   * Switches the visible page and highlights the matching rail button.
+   * @param {string} pageId - e.g. "page-live"
+   */
+  function goToPage(pageId) {
+    dom.pages.forEach(p => p.classList.toggle('active', p.id === pageId));
+    dom.railBtns.forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+  }
+
+  dom.railBtns.forEach(btn => {
+    btn.addEventListener('click', () => goToPage(btn.dataset.page));
+  });
 
   // ===========================================================================
   // SECTION 17: Manual Verse
@@ -1029,6 +1135,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (dom.btnManualSend) {
     dom.btnManualSend.addEventListener('click', sendManualVerse);
+  }
+
+  const btnVersePrev = document.getElementById('btn-verse-prev');
+  const btnVerseNext = document.getElementById('btn-verse-next');
+  if (btnVersePrev) {
+    btnVersePrev.addEventListener('click', () => send({ type: 'manual_verse', text: 'previous verse' }));
+  }
+  if (btnVerseNext) {
+    btnVerseNext.addEventListener('click', () => send({ type: 'manual_verse', text: 'next verse' }));
   }
 
   // Fullscreen live scripture button
@@ -1119,7 +1234,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── Application menu bar (File / Edit / View / Help) ────────────────────
-  const SETUP_GUIDE_URL = 'https://claude.ai/code/artifact/049238da-f9c3-4f7b-89c2-7f2a8e00ad05';
   const MENU_ACTIONS = {
     'restart-backend': () => { window.electronAPI?.restartPython(); showToast('Restarting backend…', 'info'); },
     'quit':            () => window.electronAPI?.close(),
@@ -1128,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'paste':            () => document.execCommand('paste'),
     'reload':           () => window.electronAPI?.reloadWindow(),
     'toggle-devtools':  () => window.electronAPI?.toggleDevTools(),
-    'setup-guide':      () => window.electronAPI?.openExternalUrl(SETUP_GUIDE_URL),
+    'setup-guide':      () => openHelp(),
     'report-issue':     () => window.electronAPI?.openExternalUrl('https://github.com/yawpoku/biblecue/issues'),
     'github':           () => window.electronAPI?.openExternalUrl('https://github.com/yawpoku/biblecue'),
   };
@@ -1139,9 +1253,9 @@ document.addEventListener('DOMContentLoaded', () => {
       closeAllMenus();
     });
   });
-  // Click-to-open (in addition to the CSS :hover), so the menu also works
-  // for keyboard/touch users, and so clicking one item then moving to an
-  // adjacent one switches menus like a real menu bar.
+  // Click-to-open/close (the dropdown's visibility is driven entirely by
+  // .menu-open, not CSS :hover — see style.css). Hovering an adjacent item
+  // while one is already open switches to it, like a real menu bar.
   const menubarItems = document.querySelectorAll('.menubar-item');
   function closeAllMenus() {
     menubarItems.forEach(m => m.classList.remove('menu-open'));
@@ -1186,6 +1300,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dom.helpOverlay && !dom.helpOverlay.hidden) closeHelp();
   });
+  // Native macOS menu bar's "Setup Guide" item (main.js) pushes this event
+  // since it has no direct access to the renderer's DOM.
+  window.electronAPI?.onOpenSetupGuide?.(openHelp);
 
   // Copy-to-clipboard buttons on code snippets in the help guide
   document.querySelectorAll('.help-copy-btn').forEach(btn => {
@@ -1203,27 +1320,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(() => showToast('Could not copy — select the text manually', 'error'));
     });
   });
-
-  // ── Theme toggle (dark ↔ light) ──────────────────────────────────────────
-  function applyTheme (theme) {
-    document.body.dataset.theme = theme;
-    if (dom.btnTheme) {
-      dom.btnTheme.textContent = theme === 'light' ? '🌙' : '☀';
-      dom.btnTheme.title = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
-    }
-  }
-
-  // Restore saved preference on boot
-  const savedTheme = localStorage.getItem('biblecue-theme') || 'dark';
-  applyTheme(savedTheme);
-
-  if (dom.btnTheme) {
-    dom.btnTheme.addEventListener('click', () => {
-      const next = document.body.dataset.theme === 'light' ? 'dark' : 'light';
-      applyTheme(next);
-      localStorage.setItem('biblecue-theme', next);
-    });
-  }
 
   // ===========================================================================
   // SECTION 20: Keyboard Shortcuts
@@ -1244,12 +1340,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.ctrlKey && e.key === 'b') {
       e.preventDefault();
       send({ type: 'open_browser' });
-    }
-
-    // Ctrl+T — toggle light/dark theme
-    if (e.ctrlKey && e.key === 't') {
-      e.preventDefault();
-      if (dom.btnTheme) dom.btnTheme.click();
     }
   });
 
