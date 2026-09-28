@@ -468,6 +468,31 @@ body.is-mac #btn-close {
   flex-shrink: 0;
 }
 
+/* #deepgram-key-row stacks a label, an input+buttons line, a hint
+   sentence, and a status line — it needs a column, not the single-line
+   row layout .form-row normally provides (that flex-row default was
+   squeezing all four pieces onto one line and letting the nowrap hint
+   text overlap the status line once it had content). */
+#deepgram-key-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+#deepgram-key-row label {
+  white-space: normal;
+  min-width: 0;
+}
+#deepgram-key-row .form-hint {
+  white-space: normal;
+  line-height: 1.5;
+}
+#link-deepgram-signup {
+  color: var(--gold);
+  text-decoration: underline;
+}
+#link-deepgram-signup:hover {
+  color: var(--gold-dim);
+}
+
 .form-hint {
   font-size: 10px;
   color: var(--fg-3);
