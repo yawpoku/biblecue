@@ -2831,11 +2831,20 @@ class HeadlessApp:
         elif t == "manual_verse":
             text = msg.get("text", "").strip()
             if text:
-                refs = parse_scripture(text)
-                if refs:
-                    self._process_refs(refs)
+                # Check navigation first — the Prev/Next buttons send literal
+                # "previous verse" / "next verse" text here, which parse_scripture()
+                # alone would never match (it only recognises actual references).
+                with self._cur_lock:
+                    cb, cc, cv = self._cur_book, self._cur_chap, self._cur_verse
+                nav_ref = _detect_navigation(text, cb, cc, cv)
+                if nav_ref:
+                    self._process_refs([nav_ref], nav=True)
                 else:
-                    self._logd(f"❓ Not found: {text}")
+                    refs = parse_scripture(text)
+                    if refs:
+                        self._process_refs(refs)
+                    else:
+                        self._logd(f"❓ Not found: {text}")
 
         elif t == "open_browser":
             url = f"http://127.0.0.1:{self._http_port or 8766}"
