@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
     outPpUuid:          document.getElementById('out-pp-uuid'),
     outEwEnabled:       document.getElementById('out-ew-enabled'),
     outEwPath:          document.getElementById('out-ew-path'),
+    outFreeshowEnabled: document.getElementById('out-freeshow-enabled'),
+    outFreeshowIp:      document.getElementById('out-freeshow-ip'),
+    outFreeshowPort:    document.getElementById('out-freeshow-port'),
+    outFreeshowAuth:    document.getElementById('out-freeshow-auth'),
     outClipEnabled:     document.getElementById('out-clip-enabled'),
     outWebhookEnabled:  document.getElementById('out-webhook-enabled'),
     outWebhookUrl:      document.getElementById('out-webhook-url'),
@@ -389,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const find = (type) => outputs.find(o => o.type === type) || {};
     const pp      = find('propresenter');
     const ew      = find('easyworship');
+    const freeshow = find('freeshow');
     const clip    = find('clipboard');
     const webhook = find('http_webhook');
     const file    = find('text_file');
@@ -401,6 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.outPpUuid)         dom.outPpUuid.value           = pp.uuid  || '';
     if (dom.outEwEnabled)      dom.outEwEnabled.checked      = !!ew.enabled;
     if (dom.outEwPath)         dom.outEwPath.value           = ew.path || '';
+    if (dom.outFreeshowEnabled) dom.outFreeshowEnabled.checked = !!freeshow.enabled;
+    if (dom.outFreeshowIp)      dom.outFreeshowIp.value        = freeshow.ip   || '';
+    if (dom.outFreeshowPort)    dom.outFreeshowPort.value      = freeshow.port || '5506';
+    if (dom.outFreeshowAuth)    dom.outFreeshowAuth.value      = freeshow.auth_key || '';
     if (dom.outClipEnabled)    dom.outClipEnabled.checked    = !!clip.enabled;
     if (dom.outWebhookEnabled) dom.outWebhookEnabled.checked = !!webhook.enabled;
     if (dom.outWebhookUrl)     dom.outWebhookUrl.value       = webhook.url || '';
@@ -541,6 +550,10 @@ document.addEventListener('DOMContentLoaded', () => {
         uuid: dom.outPpUuid ? dom.outPpUuid.value.trim() : '' },
       { type: 'easyworship', enabled: dom.outEwEnabled ? dom.outEwEnabled.checked : false,
         path: dom.outEwPath ? dom.outEwPath.value.trim() : '' },
+      { type: 'freeshow', enabled: dom.outFreeshowEnabled ? dom.outFreeshowEnabled.checked : false,
+        ip: dom.outFreeshowIp ? dom.outFreeshowIp.value.trim() : '',
+        port: dom.outFreeshowPort ? dom.outFreeshowPort.value.trim() : '5506',
+        auth_key: dom.outFreeshowAuth ? dom.outFreeshowAuth.value : '' },
       { type: 'clipboard', enabled: dom.outClipEnabled ? dom.outClipEnabled.checked : false },
       { type: 'http_webhook', enabled: dom.outWebhookEnabled ? dom.outWebhookEnabled.checked : false,
         url: dom.outWebhookUrl ? dom.outWebhookUrl.value.trim() : '' },

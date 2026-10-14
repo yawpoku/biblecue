@@ -500,6 +500,17 @@ body.is-mac #btn-close {
   flex-shrink: 0;
 }
 
+/* Longer, multi-clause hints (NDI, FreeShow, etc.) need to wrap and read
+   clearly rather than inherit .form-hint's nowrap + dim color, which were
+   sized for short one-line labels. */
+.form-hint-wrap {
+  font-size: 11px;
+  color: var(--fg-2);
+  white-space: normal;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
 /* ── Text Inputs ─────────────────────────────────────────────── */
 .inp {
   flex: 1;

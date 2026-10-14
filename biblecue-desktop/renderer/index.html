@@ -337,7 +337,7 @@
             </div>
             <div class="output-plugin-cfg" id="out-ndi-cfg">
               <div class="form-row"><label>Stream Name</label><input type="text" id="out-ndi-name" class="inp" placeholder="BibleCue"></div>
-              <div class="form-hint" style="font-size:10px;color:var(--fg-3);margin-top:2px">Sends the styled verse as a live 1920×1080 video source — pick it up in OBS, vMix, or any NDI receiver. Uses the Theme settings for background/fonts/colors. Requires the NDI runtime.</div>
+              <div class="form-hint form-hint-wrap">Sends the styled verse as a live 1920×1080 video source — pick it up in OBS, vMix, or any NDI receiver. Uses the Theme settings for background/fonts/colors. Requires the NDI runtime.</div>
             </div>
           </div>
 
@@ -353,6 +353,24 @@
             </div>
             <div class="output-plugin-cfg" id="out-ew-cfg">
               <div class="form-row"><label>Path</label><input type="text" id="out-ew-path" class="inp" placeholder="C:\BibleCue\easyworship_verse.txt"></div>
+            </div>
+          </div>
+
+          <!-- FreeShow -->
+          <div class="output-plugin-row">
+            <div class="output-plugin-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="out-freeshow-enabled">
+                <span class="checkbox-custom"></span>
+              </label>
+              <span class="output-plugin-name">FreeShow</span>
+              <button class="output-expand-btn" data-target="out-freeshow-cfg">▸</button>
+            </div>
+            <div class="output-plugin-cfg" id="out-freeshow-cfg">
+              <div class="form-row"><label>IP</label><input type="text" id="out-freeshow-ip" class="inp" placeholder="127.0.0.1"></div>
+              <div class="form-row"><label>Port</label><input type="text" id="out-freeshow-port" class="inp inp-sm" placeholder="5506"></div>
+              <div class="form-row"><label>Auth Key</label><input type="password" id="out-freeshow-auth" class="inp" placeholder="Only if set in FreeShow"></div>
+              <div class="form-hint form-hint-wrap">In FreeShow, turn on the REST API under Connection settings and match the port here (default 5506).</div>
             </div>
           </div>
 

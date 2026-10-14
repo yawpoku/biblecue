@@ -10,6 +10,7 @@ import threading
 import requests
 
 _pro_session = requests.Session()
+_freeshow_session = requests.Session()
 
 
 def fire_outputs(settings: dict, verse_text: str, reference: str, translation: str) -> tuple:
@@ -26,6 +27,8 @@ def fire_outputs(settings: dict, verse_text: str, reference: str, translation: s
                 _output_propresenter(plugin, verse_text, reference, translation)
             elif ptype == "easyworship":
                 _output_easyworship(plugin, verse_text, reference)
+            elif ptype == "freeshow":
+                _output_freeshow(plugin, verse_text, reference)
             elif ptype == "clipboard":
                 _output_clipboard(verse_text, reference)
             elif ptype == "http_webhook":
@@ -75,6 +78,52 @@ def _output_easyworship(cfg: dict, verse_text: str, reference: str) -> None:
         return
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"{verse_text}\n{reference}")
+
+
+def _output_freeshow(cfg: dict, verse_text: str, reference: str) -> None:
+    """FreeShow (freeshow.app) exposes a real local REST API — unlike
+    EasyWorship above, this is a genuine live push, not a file-polling
+    workaround. Enable the REST API under FreeShow's Connection settings and
+    point this at that machine's IP; default REST port is 5506. An auth key
+    is only needed if one is set in FreeShow.
+
+    Verified live against a running FreeShow instance: create_show returns
+    204 with no body, so its new show's id can't be read off the response —
+    this round-trips through get_shows and takes the most recently created
+    show. (Matching by name doesn't work: FreeShow sanitizes show names and
+    silently replaces ":" with ",", so "John 3:16" is stored as "John 3,16"
+    — rather than replicate that rule here, just take the newest one, since
+    nothing else should be creating shows at the same instant.)
+    name_select_show/index_select_slide do NOT push to the live output in
+    this version; start_show with the real id is what actually does."""
+    global _freeshow_session
+    ip = cfg.get("ip", "").strip()
+    if not ip:
+        return
+    port = str(cfg.get("port", "5506")).strip()
+    auth_key = cfg.get("auth_key", "").strip()
+    url = f"http://{ip}:{port}"
+    headers = {"Authorization": f"Bearer {auth_key}"} if auth_key else {}
+    text = f"{verse_text}\n{reference}"
+
+    def _send(action: str, **data):
+        r = _freeshow_session.post(url, json={"action": action, **data}, headers=headers, timeout=4)
+        r.raise_for_status()
+        return r
+
+    try:
+        _send("create_show", text=text, name=reference)
+        shows = _send("get_shows").json().get("data", {}) or {}
+        if not shows:
+            return
+        show_id = max(
+            shows.items(),
+            key=lambda kv: (kv[1].get("timestamps") or {}).get("created") or 0,
+        )[0]
+        _send("start_show", id=show_id)
+    except requests.exceptions.ConnectionError:
+        _freeshow_session = requests.Session()
+        raise
 
 
 def _output_clipboard(verse_text: str, reference: str) -> None:

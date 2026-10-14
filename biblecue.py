@@ -176,6 +176,7 @@ DEFAULT_SETTINGS = {
     "outputs": [
         {"type": "propresenter", "enabled": False, "ip": "", "port": "1025", "uuid": ""},
         {"type": "easyworship", "enabled": False, "path": ""},
+        {"type": "freeshow",    "enabled": False, "ip": "", "port": "5506", "auth_key": ""},
         {"type": "clipboard",    "enabled": False},
         {"type": "http_webhook", "enabled": False, "url": ""},
         {"type": "text_file",    "enabled": False, "path": ""},
@@ -200,12 +201,31 @@ DEFAULT_SETTINGS = {
     },
 }
 
+_OUTPUT_PLUGIN_LABELS = {
+    "easyworship":   "EasyWorship",
+    "freeshow":      "FreeShow",
+    "clipboard":     "Clipboard",
+    "http_webhook":  "Webhook",
+    "text_file":     "Text File",
+    "obs_websocket": "OBS",
+    "tcp_raw":       "TCP",
+    "ndi":           "NDI",
+}
+
 def load_settings():
     try:
         with open(SETTINGS_FILE, encoding="utf-8") as f:
             s = json.load(f)
             for k, v in DEFAULT_SETTINGS.items():
                 s.setdefault(k, v)
+            # Backfill any output plugin types added after this settings file was
+            # first created — setdefault("outputs", ...) above only applies when
+            # the whole key is missing, not when new types are added to the list.
+            if isinstance(s.get("outputs"), list):
+                existing_types = {o.get("type") for o in s["outputs"]}
+                for default_out in DEFAULT_SETTINGS["outputs"]:
+                    if default_out["type"] not in existing_types:
+                        s["outputs"].append(dict(default_out))
             # Always sync pro_ip → outputs so editing the file directly takes effect
             if s.get("pro_ip") and isinstance(s.get("outputs"), list):
                 for out in s["outputs"]:
@@ -3140,8 +3160,10 @@ class HeadlessApp:
             other_settings = dict(self.settings)
             other_settings["outputs"] = other_outputs
             successes, errors = _fire_outputs(other_settings, verse_text, reference, trans)
+            for ptype in successes:
+                self._logd(f"📤 Sent to {_OUTPUT_PLUGIN_LABELS.get(ptype, ptype)}", subtype="fire")
             for ptype, err in errors:
-                self._logd(f"❌ {ptype}: {err}")
+                self._logd(f"❌ {_OUTPUT_PLUGIN_LABELS.get(ptype, ptype)}: {err}")
         except Exception as e:
             self._logd(f"❌ outputs error: {e}")
 
